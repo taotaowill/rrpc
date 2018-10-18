@@ -1,0 +1,17 @@
+.build/
+build/
+third_src/
+third_party/
+
+*.a
+*.o
+*.so
+.scons*
+*.pb.*
+.DS_Store*
+*.pyc
+*.INFO*
+*.WARNING*
+*.FATAL*
+*.out
+*.log*

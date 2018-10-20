@@ -12,6 +12,6 @@ message ErrorCode {
 
 message RpcMeta {
     required string sequence_id = 1;
-    optional string method = 2;
-    optional ErrorCode error_code = 3;
+    required string method = 3;
+    required ErrorCode error_code = 4;
 }

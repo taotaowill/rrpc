@@ -59,15 +59,16 @@ env.Library(
 env.Library(
     'rpc_proxy_lib',
     [
-        'src/rpc_proxy_gflags.cc',
-        'src/rpc_proxy.cc',
+        'src/proxy_gflags.cc',
+        'src/connection_manager.cc',
+        'src/proxy.cc',
     ],
 )
 
 # program
 env.Program(
     'proxy',
-    'src/rpc_proxy_main.cc',
+    'src/proxy_main.cc',
     LIBS=[
         'rpc_proxy_lib',
     ] + env['LIBS']
@@ -76,5 +77,8 @@ env.Program(
 # unittest
 env.Program(
     'test_rpc_proxy',
-    'test/test_rpc_proxy.cc',
+    'test/test_proxy.cc',
+    LIBS=[
+        'rpc_proxy_lib',
+    ] + env['LIBS']
 )

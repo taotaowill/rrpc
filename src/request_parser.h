@@ -13,7 +13,7 @@ typedef boost::shared_ptr<RpcRequestParser> RpcRequestParserPtr;
 class RpcRequestParser {
 public:
     virtual ~RpcRequestParser() {}
-    virtual int Parse(char* buff) = 0;
+    virtual int Parse() = 0;
     virtual RpcRequestPtr GetRequest() = 0;
 };
 

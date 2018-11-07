@@ -2,6 +2,7 @@
 #define RRPC_CONNECTION_MANAGER_H_
 
 #include <map>
+#include <string>
 
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/member.hpp"
@@ -26,9 +27,11 @@ typedef
         RpcConnectionPtr,
         indexed_by<
             ordered_unique<
-            tag<rpc_conn_name>, BOOST_MULTI_INDEX_MEMBER(RpcConnection, std::string, conn_name)>,
+                tag<rpc_conn_name>,
+                BOOST_MULTI_INDEX_MEMBER(RpcConnection, std::string, conn_name)>,
             ordered_non_unique<
-            tag<rpc_conn_id>, BOOST_MULTI_INDEX_MEMBER(RpcConnection, uint32_t, conn_id)>
+                tag<rpc_conn_id>,
+                BOOST_MULTI_INDEX_MEMBER(RpcConnection, uint32_t, conn_id)>
         >
     > RpcConnectionContainer;
 

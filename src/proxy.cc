@@ -1,6 +1,8 @@
 #include "boost/bind.hpp"
 #include "glog/logging.h"
 
+#include <string>
+
 #include "connection.h"
 #include "connection_manager.h"
 #include "message_header.h"
@@ -11,7 +13,7 @@
 namespace rrpc {
 
 RpcProxy::RpcProxy(EventLoop* loop, int port) :
-    loop_(loop), conn_manager(new RpcConnectionManager()) {
+    loop_(loop), conn_manager_(new RpcConnectionManager()) {
     InetAddress addr("0.0.0.0", static_cast<uint16_t>(port));
     boost::scoped_ptr<TcpServer> t_server(
             new TcpServer(loop_, addr, "rpc_proxy_server"));
@@ -25,10 +27,10 @@ void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
         RpcConnectionPtr rpc_conn(new RpcConnection());
         rpc_conn->conn_name = conn_name;
         rpc_conn->conn = conn;
-        conn_manager->Insert(rpc_conn);
+        conn_manager_->Insert(rpc_conn);
     } else {
         LOG(INFO) << "Del Connection, " << conn->name();
-        conn_manager->Remove(conn_name);
+        conn_manager_->Remove(conn_name);
     }
 }
 
@@ -37,57 +39,70 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
                          Timestamp time) {
     std::string conn_name(conn->name().c_str());
     LOG(INFO) << "on message, conn_name: " << conn_name;
-    RpcConnectionPtr rpc_conn = conn_manager->GetByName(conn_name);
+    RpcConnectionPtr rpc_conn = conn_manager_->GetByName(conn_name);
     if (!rpc_conn) {
         LOG(INFO) << "rpc_conn not found";
         return;
     }
 
-    if (!rpc_conn->checked) {
-        parser_pool.AddTask(
-                boost::bind(&RpcProxy::OnMetaMessage, this, rpc_conn, buf));
-    } else {
-        parser_pool.AddTask(
-                boost::bind(&RpcProxy::OnRpcMessage, this, rpc_conn, buf));
-    }
+    // append data
+    MutexLock lock(&mutex_);
+    muduo::string data = buf->retrieveAllAsString();
+    rpc_conn->buff += data;
+    parse_pool_.AddTask(boost::bind(&RpcProxy::ParseMessage, this, rpc_conn));
 }
 
 bool RpcProxy::Start() {
-    tcp_server_->setConnectionCallback(boost::bind(&RpcProxy::OnConnection, this, _1));
-    tcp_server_->setMessageCallback(boost::bind(&RpcProxy::OnMessage, this, _1, _2, _3));
+    tcp_server_->setConnectionCallback(
+            boost::bind(&RpcProxy::OnConnection, this, _1));
+    tcp_server_->setMessageCallback(
+            boost::bind(&RpcProxy::OnMessage, this, _1, _2, _3));
     tcp_server_->start();
     return true;
 }
 
-void RpcProxy::OnMetaMessage(RpcConnectionPtr rpc_conn,
-                             Buffer* buf) {
+void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     MutexLock lock(&mutex_);
-    muduo::string buf_str = buf->retrieveAllAsString();
-    muduo::string& data = rpc_conn->buff;
-    data += buf_str;
-    size_t size = data.size();
-    if (size < RPC_CONNECTION_META_SIZE) {
-        LOG(INFO) << "meta message size not ready: " << size;
+    // deal with meta message
+    if (!rpc_conn->checked) {
+        muduo::string& data = rpc_conn->buff;
+        size_t size = data.size();
+        if (size != RPC_CONNECTION_META_SIZE) {
+            LOG(WARNING) << "conn meta in invalid size: " << size;
+            conn_manager_->Remove(rpc_conn->conn_name);
+            return;
+        }
+
+        const RpcConnectionMeta* meta = \
+               reinterpret_cast<const RpcConnectionMeta*>(data.c_str());
+        if (!meta->Check()) {
+            LOG(WARNING) << "conn meta validate fail";
+            conn_manager_->Remove(rpc_conn->conn_name);
+            return;
+        }
+
+        // echo back
+        rpc_conn->conn->send(meta, RPC_CONNECTION_META_SIZE);
+        // modify rpc_conn
+        rpc_conn->conn_id = meta->conn_id;
+        rpc_conn->conn_type = meta->conn_type;
+        rpc_conn->checked = true;
+        LOG(INFO) << "conn meta parsed ok"
+                  << ", conn_id: " << rpc_conn->conn_id
+                  << ", conn_type: " << rpc_conn->conn_type;
+
+        // reset data
+        data.clear();
         return;
     }
 
-    const RpcConnectionMeta* meta = reinterpret_cast<const RpcConnectionMeta*>(data.c_str());
-    if (!meta->Check()) {
-        LOG(WARNING) << "conn meta check fail";
-        conn_manager->Remove(rpc_conn->conn_name);
-        return;
+    // deal with rpc message
+    LOG(INFO) << "parse message";
+    int ret = rpc_conn->request_parser->Parse();
+    if (ret == 1) {
+        RpcRequestPtr request = rpc_conn->request_parser->GetRequest();
+        LOG(INFO) << "request_meta: " << request->meta.DebugString();
     }
-
-    // cut parsed buffer
-    data = data.substr(RPC_CONNECTION_META_SIZE);
-    LOG(INFO) << "left data size: " << data.size();
-    //if (meta->conn_type == RPC_CONNECTION_TYPE_CLIENT ) {
-    //} else {
-    //}
-}
-
-void RpcProxy::OnRpcMessage(RpcConnectionPtr rpc_conn,
-                            Buffer* buf) {
 }
 
 }  // namespace rrpc

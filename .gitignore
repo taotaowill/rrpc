@@ -15,3 +15,6 @@ third_party/
 *.FATAL*
 *.out
 *.log*
+
+test_*
+proxy

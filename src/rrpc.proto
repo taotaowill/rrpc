@@ -1,0 +1,17 @@
+syntax = "proto2";
+package rrpc;
+
+message ErrorCode {
+    enum ErrorType {
+        OK = 0;
+        ERROR = 1;
+    }
+    optional ErrorType type = 1;
+    optional string message = 2;
+}
+
+message RpcMeta {
+    optional int64 sequence_id = 1;
+    optional string method = 3;
+    optional ErrorCode error_code = 4;
+}

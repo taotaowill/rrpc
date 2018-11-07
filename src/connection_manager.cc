@@ -1,3 +1,5 @@
+#include <string>
+
 #include "connection_manager.h"
 
 namespace rrpc {

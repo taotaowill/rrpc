@@ -37,8 +37,7 @@ public:
 private:
     void OnConnection(const TcpConnectionPtr &conn);
     void OnMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
-    void OnMetaMessage(RpcConnectionPtr rpc_conn, Buffer* buf);
-    void OnRpcMessage(RpcConnectionPtr rpc_conn, Buffer* buf);
+    void ParseMessage(RpcConnectionPtr rpc_conn);
     // void OnClientConnection();
     // void OnServerConnection();
     // void OnClientMessage();
@@ -47,9 +46,9 @@ private:
 private:
     Mutex mutex_;
     EventLoop* loop_;
-    ThreadPool parser_pool;
+    ThreadPool parse_pool_;
     boost::scoped_ptr<TcpServer> tcp_server_;
-    boost::scoped_ptr<RpcConnectionManager> conn_manager;
+    boost::scoped_ptr<RpcConnectionManager> conn_manager_;
 };
 
 }

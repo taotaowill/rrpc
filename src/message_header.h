@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define RPC_MESSAGE_HEADER_MAGIC 1129337426u  // RRPC
-#define RPC_MESSAGE_HEADER_SIZE 24;
+#define RPC_MESSAGE_HEADER_SIZE 24
 
 namespace rrpc {
 

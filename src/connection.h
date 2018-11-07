@@ -6,6 +6,9 @@
 
 #include "muduo/net/TcpConnection.h"
 
+#include "connection_meta_parser.h"
+#include "pb_request_parser.h"
+
 #define RPC_CONNECTION_META_MAGIC 1096041805u  // META
 #define RPC_CONNECTION_META_SIZE 16
 
@@ -51,8 +54,19 @@ struct RpcConnection {
     bool checked;
     TcpConnectionPtr conn;
     muduo::string buff;
+    RpcPbRequestParser* request_parser;
+    RpcConnectionMetaParser* meta_parser;
 
-    RpcConnection() : conn_id(0), checked(false) {}
+    RpcConnection() :
+        conn_id(0),
+        checked(false),
+        request_parser(new RpcPbRequestParser(&buff)),
+        meta_parser(new RpcConnectionMetaParser(&buff)) {}
+
+    ~RpcConnection() {
+        delete request_parser;
+        delete meta_parser;
+    }
 };
 
 typedef boost::shared_ptr<RpcConnection> RpcConnectionPtr;

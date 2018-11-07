@@ -10,11 +10,13 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpConnection.h"
 
-#include "log_setting.h"
 #include "connection.h"
+#include "log_setting.h"
+#include "rrpc.pb.h"
 
 using namespace muduo;
 using namespace muduo::net;
+using namespace rrpc;
 
 void onConnection(const TcpConnectionPtr &conn) {
     if (!conn->connected()) {
@@ -23,19 +25,16 @@ void onConnection(const TcpConnectionPtr &conn) {
         return;
     }
 
-    rrpc::RpcConnectionMeta meta;
-    LOG(INFO) << sizeof(meta);
-    meta.conn_type = 1;
+    RpcConnectionMeta meta;
+    meta.conn_type = RPC_CONNECTION_TYPE_CLIENT;
     meta.conn_id = 100045;
     meta.crc = 1;
 
-    char* data = new char[18];
-    memset(data, 0, sizeof(18));
+    char* data = new char[16];
+    memset(data, 0, sizeof(16));
     memcpy(data, &meta, sizeof(meta));
-    data[16] = 'i';
-    data[17] = 'j';
-    conn->send(reinterpret_cast<void*>(data), 18);
-    LOG(INFO) << "EchoClient connected";
+    conn->send(reinterpret_cast<void*>(data), 16);
+    LOG(INFO) << "EchoClient conn meta sended to proxy";
 }
 
 void onMessage(const TcpConnectionPtr &conn,
@@ -44,6 +43,23 @@ void onMessage(const TcpConnectionPtr &conn,
     muduo::string msg(buf->retrieveAllAsString());
     LOG(INFO) << conn->name() << " echo " << msg.size() << " bytes, "
               << "data received at " << time.toString();
+    if (msg.size() != 16) {
+        return;
+    }
+
+    RpcRequest request;
+    RpcMeta* meta = new RpcMeta();
+    meta->set_sequence_id(123);
+    meta->set_method("rrpc::hello::Service::GetAgent");
+    request.meta.CopyFrom(*meta);
+    request.data = "1234567890";
+    request.conn_id = 100045;
+    uint32_t size;
+    void* send_buff = request.Packaging(size);
+    LOG(INFO) << "message request size: " << size;
+    conn->send(send_buff, size);
+    LOG(INFO) << "hhhhhh";
+    //free(send_buff);
 }
 
 TEST(Proxy, main) {

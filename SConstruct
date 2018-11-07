@@ -5,8 +5,8 @@ protoc = Builder(
 env_gen = Environment(BUILDERS = {'Protoc': protoc})
 env_gen.Protoc(
     [
-        'src/rpc.pb.h',
-        'src/rpc.pb.cc'
+        'src/rrpc.pb.h',
+        'src/rrpc.pb.cc'
     ],
     Glob('src/proto/*.proto')
 )
@@ -52,15 +52,17 @@ env = Environment(
 
 # library
 env.Library(
-    'rpc_proto_lib',
-    Glob('src/rpc.pb.cc')
+    'proto_lib',
+    Glob('src/rrpc.pb.cc')
 )
 
 env.Library(
-    'rpc_proxy_lib',
+    'proxy_lib',
     [
         'src/proxy_gflags.cc',
         'src/connection_manager.cc',
+        'src/connection_meta_parser.cc',
+        'src/pb_request_parser.cc',
         'src/proxy.cc',
     ],
 )
@@ -70,7 +72,8 @@ env.Program(
     'proxy',
     'src/proxy_main.cc',
     LIBS=[
-        'rpc_proxy_lib',
+        'proxy_lib',
+        'proto_lib',
     ] + env['LIBS']
 )
 
@@ -79,6 +82,7 @@ env.Program(
     'test_rpc_proxy',
     'test/test_proxy.cc',
     LIBS=[
-        'rpc_proxy_lib',
+        'proxy_lib',
+        'proto_lib',
     ] + env['LIBS']
 )

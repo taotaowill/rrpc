@@ -13,6 +13,7 @@ int main(int argc, char* argv[]) {
     if(!proxy_server.Start()) {
         exit(-1);
     }
+    LOG(INFO) << "proxy server start ok on: " << FLAGS_rpc_proxy_port;
 
     loop.loop();
     return 0;

@@ -9,43 +9,10 @@
 #include "connection_meta_parser.h"
 #include "pb_request_parser.h"
 
-#define RPC_CONNECTION_META_MAGIC 1096041805u  // META
-#define RPC_CONNECTION_META_SIZE 16
 
 namespace rrpc {
 
 using muduo::net::TcpConnectionPtr;
-
-enum RpcConnectionType {
-    RPC_CONNECTION_TYPE_CLIENT = 0,
-    RPC_CONNECTION_TYPE_SERVER = 1,
-};
-
-class RpcConnectionMeta;
-typedef boost::shared_ptr<RpcConnectionMeta> RpcConnectionMetaPtr;
-
-struct RpcConnectionMeta {
-    union {
-        char magic_str[4];
-        uint32_t magic_str_value;
-    };
-    uint32_t conn_type;
-    uint32_t conn_id;
-    uint32_t crc;
-
-    RpcConnectionMeta() :
-        magic_str_value(RPC_CONNECTION_META_MAGIC),
-        conn_type(0), conn_id(0), crc(1) {}
-
-    bool Check() const {
-        if (magic_str_value == RPC_CONNECTION_META_MAGIC
-                || crc == 1) {\
-            return true;
-        }
-
-        return false;
-    }
-};
 
 struct RpcConnection {
     std::string conn_name;
@@ -54,14 +21,14 @@ struct RpcConnection {
     bool checked;
     TcpConnectionPtr conn;
     muduo::string buff;
-    RpcPbRequestParser* request_parser;
     RpcConnectionMetaParser* meta_parser;
+    RpcPbRequestParser* request_parser;
 
     RpcConnection() :
         conn_id(0),
         checked(false),
-        request_parser(new RpcPbRequestParser(&buff)),
-        meta_parser(new RpcConnectionMetaParser(&buff)) {}
+        meta_parser(new RpcConnectionMetaParser(&buff)),
+        request_parser(new RpcPbRequestParser(&buff)) {}
 
     ~RpcConnection() {
         delete request_parser;

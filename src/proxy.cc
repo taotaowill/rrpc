@@ -64,35 +64,32 @@ bool RpcProxy::Start() {
 void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     MutexLock lock(&mutex_);
     // deal with meta message
+    RpcConnectionMetaPtr meta;
     if (!rpc_conn->checked) {
-        muduo::string& data = rpc_conn->buff;
-        size_t size = data.size();
-        if (size != RPC_CONNECTION_META_SIZE) {
-            LOG(WARNING) << "conn meta in invalid size: " << size;
-            conn_manager_->Remove(rpc_conn->conn_name);
-            return;
+        int ret = rpc_conn->meta_parser->Parse();
+        LOG(INFO) << "meta_parser: " << ret;
+        switch (ret) {
+            case -1:
+                conn_manager_->Remove(rpc_conn->conn_name);
+                break;
+            case 1:
+                meta = rpc_conn->meta_parser->GetMeta();
+                // echo back
+                rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
+                // modify rpc_conn
+                rpc_conn->conn_id = meta->conn_id;
+                rpc_conn->conn_type = meta->conn_type;
+                rpc_conn->checked = true;
+                LOG(INFO) << "conn meta parsed ok"
+                          << ", conn_id: " << rpc_conn->conn_id
+                          << ", conn_type: " << rpc_conn->conn_type;
+
+                // reset data
+                rpc_conn->buff.clear();
+                break;
+            default:
+                break;
         }
-
-        const RpcConnectionMeta* meta = \
-               reinterpret_cast<const RpcConnectionMeta*>(data.c_str());
-        if (!meta->Check()) {
-            LOG(WARNING) << "conn meta validate fail";
-            conn_manager_->Remove(rpc_conn->conn_name);
-            return;
-        }
-
-        // echo back
-        rpc_conn->conn->send(meta, RPC_CONNECTION_META_SIZE);
-        // modify rpc_conn
-        rpc_conn->conn_id = meta->conn_id;
-        rpc_conn->conn_type = meta->conn_type;
-        rpc_conn->checked = true;
-        LOG(INFO) << "conn meta parsed ok"
-                  << ", conn_id: " << rpc_conn->conn_id
-                  << ", conn_type: " << rpc_conn->conn_type;
-
-        // reset data
-        data.clear();
         return;
     }
 

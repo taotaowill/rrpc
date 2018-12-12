@@ -13,8 +13,9 @@ class RpcRequest;
 typedef boost::shared_ptr<RpcRequest> RpcRequestPtr;
 
 struct RpcRequest {
+    uint32_t src_id;
+    uint32_t dst_id;
     RpcMeta meta;
-    uint32_t conn_id;
     muduo::string data;
 
     void* Packaging(uint32_t& size) {
@@ -23,7 +24,8 @@ struct RpcRequest {
         meta.SerializeToString(&meta_string);
         header.meta_size = meta_string.size();
         header.data_size = data.size();
-        header.conn_id = conn_id;
+        header.src_id = src_id;
+        header.dst_id = dst_id;
         header.crc = 0;
         uint32_t body_size = header.meta_size + header.data_size;
         size = body_size + RPC_MESSAGE_HEADER_SIZE;

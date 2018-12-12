@@ -1,14 +1,32 @@
 # gen protobuf
-protoc = Builder(
+meta_protoc = Builder(
     action = 'third_party/bin/protoc --proto_path=src/ --cpp_out=src/ src/*.proto'
 )
-env_gen = Environment(BUILDERS = {'Protoc': protoc})
-env_gen.Protoc(
+
+test_protoc = Builder(
+    action = 'third_party/bin/protoc --proto_path=test/ --cpp_out=test/ test/*.proto'
+)
+env_gen = Environment(
+    BUILDERS = {
+        'MetaProtoc': meta_protoc,
+        'TestProtoc': test_protoc
+    }
+)
+
+env_gen.MetaProtoc(
     [
         'src/rrpc.pb.h',
         'src/rrpc.pb.cc'
     ],
     Glob('src/proto/*.proto')
+)
+
+env_gen.TestProtoc(
+    [
+        'test/echo.pb.h',
+        'test/echo.pb.cc'
+    ],
+    Glob('test/proto/*.proto')
 )
 
 env = Environment(
@@ -67,6 +85,13 @@ env.Library(
     ],
 )
 
+env.Library(
+    'rrpc_lib',
+    [
+        'src/pb_server.cc',
+    ],
+)
+
 # program
 env.Program(
     'proxy',
@@ -84,5 +109,16 @@ env.Program(
     LIBS=[
         'proxy_lib',
         'proto_lib',
+    ] + env['LIBS']
+)
+
+env.Program(
+    'test_rpc_server',
+    [
+        'test/test_server.cc',
+        'test/echo.pb.cc',
+    ],
+    LIBS=[
+        'rrpc_lib'
     ] + env['LIBS']
 )

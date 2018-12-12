@@ -29,7 +29,8 @@ int RpcPbRequestParser::Parse() {
                 *buff_ = buff_->substr(RPC_MESSAGE_HEADER_SIZE);
                 stage_ = PARSING_BODY;
                 LOG(INFO) << "header parse ok"
-                    << ", conn_id: " << header_.conn_id
+                    << ", src_id: " << header_.src_id
+                    << ", dst_id: " << header_.dst_id
                     << ", meta_size: " << header_.meta_size
                     << ", data_size: " << header_.data_size;
             }
@@ -53,7 +54,7 @@ int RpcPbRequestParser::Parse() {
                 << ", method: " << request_.meta.method();
             request_.data = buff_->substr(header_.meta_size, header_.data_size);
             LOG(INFO) << "data parse ok"
-                << "data: " << request_.data;
+                << ", data: " << request_.data;
             *buff_ = buff_->substr(header_.meta_size + header_.data_size);
             request_list_.push_back(request_);
             stage_ = PARSING_HEADER;

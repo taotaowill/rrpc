@@ -6,6 +6,8 @@
 #include "glog/logging.h"
 #include "gflags/gflags.h"
 
+namespace rrpc {
+
 void SetupLog(const std::string name) {
     if (FLAGS_log_dir.empty()) {
         FLAGS_log_dir = ".";
@@ -22,5 +24,7 @@ void SetupLog(const std::string name) {
     google::SetLogSymlink(google::ERROR,  name.c_str());
     google::InstallFailureSignalHandler();
 }
+
+}  // namespace rrpc
 
 #endif  // RRPC_LOG_SETTING_H_

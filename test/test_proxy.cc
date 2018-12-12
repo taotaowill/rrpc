@@ -10,9 +10,7 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpConnection.h"
 
-#include "connection.h"
-#include "log_setting.h"
-#include "rrpc.pb.h"
+#include "rrpc.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -53,13 +51,14 @@ void onMessage(const TcpConnectionPtr &conn,
     meta->set_method("rrpc::hello::Service::GetAgent");
     request.meta.CopyFrom(*meta);
     request.data = "1234567890";
-    request.conn_id = 100045;
+    request.src_id = 1000000001;
+    request.dst_id = 100045;
     uint32_t size;
     void* send_buff = request.Packaging(size);
     LOG(INFO) << "message request size: " << size;
     conn->send(send_buff, size);
     LOG(INFO) << "hhhhhh";
-    //free(send_buff);
+    free(send_buff);
 }
 
 TEST(Proxy, main) {
@@ -73,7 +72,7 @@ TEST(Proxy, main) {
 }
 
 int main(int argc, char* argv[]) {
-    SetupLog("test_rpc_proxy");
+    rrpc::SetupLog("test_rpc_proxy");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

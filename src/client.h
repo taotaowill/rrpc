@@ -6,7 +6,7 @@ namespace rrpc {
 class RpcClient {
 public:
     RpcClient();
-    virtual ~RpcClient;
+    virtual ~RpcClient();
 };
 
 }  // namespace rrpc

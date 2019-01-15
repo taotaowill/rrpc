@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
-    SetupLog("proxy");
+    rrpc::SetupLog("proxy");
 
     muduo::net::EventLoop loop;
     rrpc::RpcProxy proxy_server(&loop, FLAGS_rpc_proxy_port);

@@ -99,6 +99,7 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     if (ret == 1) {
         RpcRequestPtr request = rpc_conn->request_parser->GetRequest();
         LOG(INFO) << "request_meta: " << request->meta.DebugString();
+        LOG(INFO) << "request_data: " << request->data;
     }
 }
 

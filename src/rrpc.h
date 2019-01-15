@@ -6,7 +6,9 @@
 #include "message_header.h"
 #include "proxy.h"
 #include "request.h"
-#include "rpc.pb.h"
+#include "rrpc.pb.h"
 #include "server.h"
+#include "pb_server.h"
+#include "log_setting.h"
 
 #endif  // RRPC_RRPC_H_

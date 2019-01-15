@@ -1,5 +1,4 @@
-#ifndef RRPC_LOG_SETTING_H_
-#define RRPC_LOG_SETTING_H_
+#pragma once
 
 #include <string>
 
@@ -8,7 +7,7 @@
 
 namespace rrpc {
 
-void SetupLog(const std::string name) {
+static void SetupLog(const std::string name) {
     if (FLAGS_log_dir.empty()) {
         FLAGS_log_dir = ".";
     }
@@ -26,5 +25,3 @@ void SetupLog(const std::string name) {
 }
 
 }  // namespace rrpc
-
-#endif  // RRPC_LOG_SETTING_H_

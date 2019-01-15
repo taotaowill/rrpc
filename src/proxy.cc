@@ -6,18 +6,14 @@
 #include "connection.h"
 #include "connection_manager.h"
 #include "message_header.h"
-#include "pb_request_parser.h"
+#include "pb_message_parser.h"
 #include "proxy.h"
-#include "request.h"
+#include "message.h"
 
 namespace rrpc {
 
-RpcProxy::RpcProxy(EventLoop* loop, int port) :
-    loop_(loop), conn_manager_(new RpcConnectionManager()) {
-    InetAddress addr("0.0.0.0", static_cast<uint16_t>(port));
-    boost::scoped_ptr<TcpServer> t_server(
-            new TcpServer(loop_, addr, "rpc_proxy_server"));
-    tcp_server_.swap(t_server);
+RpcProxy::RpcProxy(int port) :
+    port_(port), conn_manager_(new RpcConnectionManager()) {
 }
 
 void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
@@ -53,12 +49,26 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
 }
 
 bool RpcProxy::Start() {
+    loop_pool_.AddTask(boost::bind(&RpcProxy::StartLoop, this));
+    return true;
+}
+
+void RpcProxy::StartLoop() {
+    InetAddress addr("0.0.0.0", static_cast<uint16_t>(port_));
+    EventLoop loop;
+    boost::scoped_ptr<TcpServer> t_server(
+            new TcpServer(&loop, addr, "proxy_server"));
+    tcp_server_.swap(t_server);
     tcp_server_->setConnectionCallback(
             boost::bind(&RpcProxy::OnConnection, this, _1));
     tcp_server_->setMessageCallback(
             boost::bind(&RpcProxy::OnMessage, this, _1, _2, _3));
     tcp_server_->start();
-    return true;
+    loop.loop();
+}
+
+void RpcProxy::Stop() {
+    loop_pool_.Stop(false);
 }
 
 void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
@@ -74,8 +84,8 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
                 break;
             case 1:
                 meta = rpc_conn->meta_parser->GetMeta();
-                // echo back
-                rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
+                //// echo back
+                //rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
                 // modify rpc_conn
                 rpc_conn->conn_id = meta->conn_id;
                 rpc_conn->conn_type = meta->conn_type;
@@ -95,12 +105,17 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
 
     // deal with rpc message
     LOG(INFO) << "parse message";
-    int ret = rpc_conn->request_parser->Parse();
+    int ret = rpc_conn->message_parser->Parse();
     if (ret == 1) {
-        RpcRequestPtr request = rpc_conn->request_parser->GetRequest();
-        LOG(INFO) << "request_meta: " << request->meta.DebugString();
-        LOG(INFO) << "request_data: " << request->data;
+        RpcMessagePtr message = rpc_conn->message_parser->GetMessage();
+        dispatch_pool_.AddTask(
+            boost::bind(&RpcProxy::DispatchMessage, this, message));
     }
+}
+
+void RpcProxy::DispatchMessage(RpcMessagePtr message) {
+    LOG(INFO) << "message_meta: " << message->meta.DebugString();
+    LOG(INFO) << "message_data: " << message->data;
 }
 
 }  // namespace rrpc

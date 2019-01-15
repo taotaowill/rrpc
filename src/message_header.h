@@ -1,5 +1,4 @@
-#ifndef RRPC_MESSAGE_HEADER_H_
-#define RRPC_MESSAGE_HEADER_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -34,5 +33,3 @@ struct RpcMessageHeader {
 };
 
 }  // namespace rrpc
-
-#endif  // RRPC_MESSAGE_HEADER_H_

@@ -46,7 +46,7 @@ fi
 # snappy
 if [ ! -f "${FLAG_DIR}/snappy_1_1_1" ] \
     || [ ! -f "${DEPS_PREFIX}/lib/libsnappy.a" ] \
-    || [ ! -f "${DEPS_PREFIX}/include/snappy/snappy.h" ]; then
+    || [ ! -f "${DEPS_PREFIX}/include/snappy.h" ]; then
     wget --no-check-certificate -O snappy-1.1.1.tar.gz $GIT_REPO/raw/master/snappy-1.1.1.tar.gz
     tar zxf snappy-1.1.1.tar.gz
     cd snappy-1.1.1
@@ -155,6 +155,30 @@ if [ ! -f "${FLAG_DIR}/common" ] \
     cd -
     touch "${FLAG_DIR}/common"
 fi
+
+#muduo
+if [ ! -f "${FLAG_DIR}/muduo" ] \
+    || [ ! -f "${DEPS_PREFIX}/lib/libmuduo_base.a" ]; then
+    rm -rf muduo*
+    wget https://github.com/chenshuo/muduo/archive/v1.0.9.tar.gz
+    tar -xzvf v1.0.9.tar.gz
+    cd muduo-1.0.9
+    #rm -rf muduo
+    #git clone https://github.com/chenshuo/muduo
+    sed -i 's/-Wold-style-cast//g' CMakeLists.txt
+    sed -i 's/-Werror//g' CMakeLists.txt
+    sed -i 's/find_package(Protobuf)//g' CMakeLists.txt
+    sed -i 's/add_subdirectory(examples)//g' CMakeLists.txt
+    sed -i 's/find_path(TCMALLOC_INCLUDE_DIR gperftools\/heap-profiler\.h)//g' CMakeLists.txt
+    sed -i "/find_package(Boost REQUIRED)/iset(BOOST_ROOT $DEPS_PREFIX/boost_1_57_0)" CMakeLists.txt
+    echo "set(TCMALLOC_INCLUDE_DIR 0)" >> CMakeLists.txt
+    bash build.sh install
+    cp -r ../build/release-install/lib/* $DEPS_PREFIX/lib
+    cp -r ../build/release-install/include/* $DEPS_PREFIX/include
+    touch "${FLAG_DIR/muduo}"
+    cd -
+fi
+
 
 cd ${WORK_DIR}
 echo "build deps done!"

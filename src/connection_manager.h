@@ -1,5 +1,4 @@
-#ifndef RRPC_CONNECTION_MANAGER_H_
-#define RRPC_CONNECTION_MANAGER_H_
+#pragma once
 
 #include <map>
 #include <string>
@@ -49,5 +48,3 @@ private:
 };
 
 }  // namespace rrpc
-
-#endif  // RRPC_CONNECTION_MANAGER_H_

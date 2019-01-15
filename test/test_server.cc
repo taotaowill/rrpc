@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include <unistd.h>
+
 #include "rrpc.h"
 #include "echo.pb.h"
 
@@ -23,16 +25,21 @@ void EchoServiceImpl::Echo(
 }
 
 TEST(Server, main) {
-    std::string endpoint = "127.0.0.1:8888";
-    rrpc::RpcServer* rpc_server = new rrpc::RpcPbServer(endpoint);
+    std::string proxy_ip = "127.0.0.1";
+    int32_t proxy_port = 8988;
+    rrpc::RpcServer* rpc_server = \
+        new rrpc::RpcPbServer(proxy_ip, proxy_port);
     ASSERT_TRUE(rpc_server->Start());
     EchoService* service = new EchoServiceImpl();
     ASSERT_TRUE(rpc_server->RegisterService(static_cast<EchoService*>(service)));
     ASSERT_TRUE(rpc_server->Count() > 0);
+    while (1) {
+      sleep(1);
+    }
 }
 
 int main(int argc, char* argv[]) {
-    SetupLog("test_rpc_proxy");
+    rrpc::SetupLog("test_rpc_proxy");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

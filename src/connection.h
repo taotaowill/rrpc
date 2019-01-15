@@ -1,5 +1,4 @@
-#ifndef RRPC_CONNECTION_H
-#define RRPC_CONNECTION_H
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -7,7 +6,7 @@
 #include "muduo/net/TcpConnection.h"
 
 #include "connection_meta_parser.h"
-#include "pb_request_parser.h"
+#include "pb_message_parser.h"
 
 
 namespace rrpc {
@@ -22,16 +21,16 @@ struct RpcConnection {
     TcpConnectionPtr conn;
     muduo::string buff;
     RpcConnectionMetaParser* meta_parser;
-    RpcPbRequestParser* request_parser;
+    RpcPbMessageParser* message_parser;
 
     RpcConnection() :
         conn_id(0),
         checked(false),
         meta_parser(new RpcConnectionMetaParser(&buff)),
-        request_parser(new RpcPbRequestParser(&buff)) {}
+        message_parser(new RpcPbMessageParser(&buff)) {}
 
     ~RpcConnection() {
-        delete request_parser;
+        delete message_parser;
         delete meta_parser;
     }
 };
@@ -39,5 +38,3 @@ struct RpcConnection {
 typedef boost::shared_ptr<RpcConnection> RpcConnectionPtr;
 
 }  // namespace rrpc
-
-#endif  // RRPC_CONNECTION_H

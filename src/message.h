@@ -1,5 +1,4 @@
-#ifndef RRPC_REQUEST_H_
-#define RRPC_REQUEST_H_
+#pragma once
 
 #include "boost/smart_ptr.hpp"
 #include "muduo/base/Types.h"
@@ -9,10 +8,10 @@
 
 namespace rrpc {
 
-class RpcRequest;
-typedef boost::shared_ptr<RpcRequest> RpcRequestPtr;
+class RpcMessage;
+typedef boost::shared_ptr<RpcMessage> RpcMessagePtr;
 
-struct RpcRequest {
+struct RpcMessage {
     uint32_t src_id;
     uint32_t dst_id;
     RpcMeta meta;
@@ -32,12 +31,14 @@ struct RpcRequest {
         void* buff = malloc(size);
         memset(buff, 0, size);
         memcpy(buff, &header, RPC_MESSAGE_HEADER_SIZE);
-        memcpy(buff + RPC_MESSAGE_HEADER_SIZE, meta_string.c_str(), header.meta_size);
-        memcpy(buff + RPC_MESSAGE_HEADER_SIZE + header.meta_size, data.c_str(), header.data_size);
+        memcpy(buff + RPC_MESSAGE_HEADER_SIZE,
+               meta_string.c_str(),
+               header.meta_size);
+        memcpy(buff + RPC_MESSAGE_HEADER_SIZE + header.meta_size,
+               data.c_str(),
+               header.data_size);
         return buff;
     }
 };
 
 }
-
-#endif  // RRPC_REQUEST_H_

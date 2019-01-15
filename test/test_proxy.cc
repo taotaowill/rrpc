@@ -11,6 +11,7 @@
 #include "muduo/net/TcpConnection.h"
 
 #include "rrpc.h"
+#include "echo.pb.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -45,17 +46,24 @@ void onMessage(const TcpConnectionPtr &conn,
         return;
     }
 
-    RpcRequest request;
+    RpcMessage message;
     RpcMeta* meta = new RpcMeta();
     meta->set_sequence_id(123);
-    meta->set_method("rrpc::hello::Service::GetAgent");
-    request.meta.CopyFrom(*meta);
-    request.data = "1234567890";
-    request.src_id = 1000000001;
-    request.dst_id = 100045;
+    meta->set_method("rrpc::test::EchoService::Echo");
+    message.meta.CopyFrom(*meta);
+
+
+    rrpc::test::EchoRequest* echo_request = new rrpc::test::EchoRequest;
+    echo_request->set_message("this is request from fake client");
+    std::string buff;
+    echo_request->SerializeToString(&buff);
+
+    message.data = buff.c_str();
+    message.src_id = 1000000001;
+    message.dst_id = 100045;
     uint32_t size;
-    void* send_buff = request.Packaging(size);
-    LOG(INFO) << "message request size: " << size;
+    void* send_buff = message.Packaging(size);
+    LOG(INFO) << "message size: " << size;
     conn->send(send_buff, size);
     LOG(INFO) << "hhhhhh";
     free(send_buff);

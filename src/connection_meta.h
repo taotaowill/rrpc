@@ -1,5 +1,4 @@
-#ifndef RRPC_CONNECTION_META_H_
-#define RRPC_CONNECTION_META_H_
+#pragma once
 
 #include "boost/smart_ptr.hpp"
 
@@ -39,5 +38,3 @@ struct RpcConnectionMeta {
 typedef boost::shared_ptr<RpcConnectionMeta> RpcConnectionMetaPtr;
 
 }  // namespace rrpc
-
-#endif

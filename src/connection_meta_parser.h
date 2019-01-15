@@ -1,5 +1,4 @@
-#ifndef RRPC_CONNECTION_META_PARSER_H_
-#define RRPC_CONNECTION_META_PARSER_H_
+#pragma once
 
 #include "muduo/base/Types.h"
 
@@ -20,5 +19,3 @@ private:
 };
 
 }  // namespace rrpc
-
-#endif

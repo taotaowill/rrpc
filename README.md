@@ -1,10 +1,22 @@
 reverse rpc for service behind NAT
 
 server:
-    RegisterServices(), Start(), OnMessage()
+    Start()
+    Stop()
+    RegisterServices()
+    OnConnection()
+    OnMessage()
+    ParseMessage()
+    ProcessRequest()
 
 client:
-    Connect(), Send()
+    Connect()
+    Send()
 
 proxy:
-    Dispatch()
+    Start()
+    Stop()
+    OnConnection()
+    OnMessage()
+    ParseMessage()
+    DispatchMessage()

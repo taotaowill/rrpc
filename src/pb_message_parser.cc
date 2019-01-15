@@ -1,17 +1,17 @@
 #include "glog/logging.h"
 
 #include "message_header.h"
-#include "pb_request_parser.h"
+#include "pb_message_parser.h"
 
 namespace rrpc {
 
-RpcPbRequestParser::RpcPbRequestParser(muduo::string* buff) : buff_(buff) {
+RpcPbMessageParser::RpcPbMessageParser(muduo::string* buff) : buff_(buff) {
 }
 
-RpcPbRequestParser::~RpcPbRequestParser() {
+RpcPbMessageParser::~RpcPbMessageParser() {
 }
 
-int RpcPbRequestParser::Parse() {
+int RpcPbMessageParser::Parse() {
     int ret = 0;
     while (buff_->size() > 0) {
         if (stage_ == PARSING_HEADER) {
@@ -42,7 +42,7 @@ int RpcPbRequestParser::Parse() {
             }
 
             LOG(INFO) << "parse meta";
-            if(!request_.meta.ParseFromArray(buff_->c_str(), header_.meta_size)) {
+            if(!message_.meta.ParseFromArray(buff_->c_str(), header_.meta_size)) {
                 LOG(WARNING) << "invalid rpc meta";
                 buff_->clear();
                 stage_ = PARSING_HEADER;
@@ -50,13 +50,13 @@ int RpcPbRequestParser::Parse() {
             }
 
             LOG(INFO) << "meta parse ok"
-                << ", sequence_id: " << request_.meta.sequence_id()
-                << ", method: " << request_.meta.method();
-            request_.data = buff_->substr(header_.meta_size, header_.data_size);
+                << ", sequence_id: " << message_.meta.sequence_id()
+                << ", method: " << message_.meta.method();
+            message_.data = buff_->substr(header_.meta_size, header_.data_size);
             LOG(INFO) << "data parse ok"
-                << ", data: " << request_.data;
+                << ", data: " << message_.data;
             *buff_ = buff_->substr(header_.meta_size + header_.data_size);
-            request_list_.push_back(request_);
+            message_list_.push_back(message_);
             stage_ = PARSING_HEADER;
             ret = 1;
         }
@@ -65,14 +65,14 @@ int RpcPbRequestParser::Parse() {
     return ret;
 }
 
-RpcRequestPtr RpcPbRequestParser::GetRequest() {
-    if (request_list_.size() > 0) {
-        RpcRequest request = request_list_.front();
-        request_list_.pop_front();
-        return boost::make_shared<RpcRequest>(request);
+RpcMessagePtr RpcPbMessageParser::GetMessage() {
+    if (message_list_.size() > 0) {
+        RpcMessage message = message_list_.front();
+        message_list_.pop_front();
+        return boost::make_shared<RpcMessage>(message);
     }
 
-    return RpcRequestPtr();
+    return RpcMessagePtr();
 }
 
 }  // namespace rrpc

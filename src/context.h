@@ -1,5 +1,4 @@
-#ifndef RRPC_CONTEXT_H_
-#define RRPC_CONTEXT_H_
+#pragma once
 
 #include "google/protobuf/service.h"
 #include "google/protobuf/descriptor.h"
@@ -49,6 +48,3 @@ private:
 };
 
 }  // namespace rrpc
-
-#endif  // RRPC_CONTEXT_H_
-

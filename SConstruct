@@ -24,7 +24,7 @@ env_gen.MetaProtoc(
 env_gen.TestProtoc(
     [
         'test/echo.pb.h',
-        'test/echo.pb.cc'
+        'test/echo.pb.cc',
     ],
     Glob('test/proto/*.proto')
 )
@@ -63,9 +63,6 @@ env = Environment(
         '-Wno-deprecated-declarations',
         '-Wno-unused-but-set-variable',
     ],
-    LINKFLAGS = [
-        '-Wl'
-    ]
 )
 
 # library
@@ -75,20 +72,14 @@ env.Library(
 )
 
 env.Library(
-    'proxy_lib',
-    [
-        'src/proxy_gflags.cc',
-        'src/connection_manager.cc',
-        'src/connection_meta_parser.cc',
-        'src/pb_request_parser.cc',
-        'src/proxy.cc',
-    ],
-)
-
-env.Library(
     'rrpc_lib',
     [
+        'src/connection_manager.cc',
+        'src/connection_meta_parser.cc',
+        'src/pb_message_parser.cc',
         'src/pb_server.cc',
+        'src/proxy_gflags.cc',
+        'src/proxy.cc',
     ],
 )
 
@@ -97,7 +88,7 @@ env.Program(
     'proxy',
     'src/proxy_main.cc',
     LIBS=[
-        'proxy_lib',
+        'rrpc_lib',
         'proto_lib',
     ] + env['LIBS']
 )
@@ -105,9 +96,12 @@ env.Program(
 # unittest
 env.Program(
     'test_rpc_proxy',
-    'test/test_proxy.cc',
+    [
+      'test/test_proxy.cc',
+      'test/echo.pb.cc',
+    ],
     LIBS=[
-        'proxy_lib',
+        'rrpc_lib',
         'proto_lib',
     ] + env['LIBS']
 )
@@ -119,6 +113,7 @@ env.Program(
         'test/echo.pb.cc',
     ],
     LIBS=[
-        'rrpc_lib'
+        'rrpc_lib',
+        'proto_lib',
     ] + env['LIBS']
 )

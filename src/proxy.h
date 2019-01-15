@@ -1,12 +1,10 @@
-#ifndef RRPC_PROXY_H_
-#define RRPC_PROXY_H_
+#pragma once
 
 #include <map>
 
 #include "boost/smart_ptr.hpp"
 #include "common/mutex.h"
 #include "common/thread_pool.h"
-#include "muduo/base/Timestamp.h"
 #include "muduo/net/Buffer.h"
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/InetAddress.h"
@@ -30,27 +28,28 @@ using muduo::net::TcpConnectionPtr;
 
 class RpcProxy {
 public:
-    RpcProxy(EventLoop* loop, int port);
+    RpcProxy(int port);
     ~RpcProxy() {};
     bool Start();
+    void Stop();
 
 private:
+    void StartLoop();
     void OnConnection(const TcpConnectionPtr &conn);
-    void OnMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
+    void OnMessage(const TcpConnectionPtr &conn,
+                   Buffer *buf,
+                   Timestamp time);
     void ParseMessage(RpcConnectionPtr rpc_conn);
-    // void OnClientConnection();
-    // void OnServerConnection();
-    // void OnClientMessage();
-    // void OnServerMessage();
+    void DispatchMessage(RpcMessagePtr message);
 
 private:
     Mutex mutex_;
-    EventLoop* loop_;
+    int32_t port_;
+    ThreadPool loop_pool_;
     ThreadPool parse_pool_;
+    ThreadPool dispatch_pool_;
     boost::scoped_ptr<TcpServer> tcp_server_;
     boost::scoped_ptr<RpcConnectionManager> conn_manager_;
 };
 
 }
-
-#endif  // RRPC_PROXY_H_

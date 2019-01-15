@@ -1,5 +1,4 @@
-#ifndef RRPC_CLIENT_H_
-#define RRPC_CLIENT_H_
+#pragma once
 
 namespace rrpc {
 
@@ -10,5 +9,3 @@ public:
 };
 
 }  // namespace rrpc
-
-#endif  // RRPC_CLIENT_H_

@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
-
 #include <unistd.h>
+
+#include "gtest/gtest.h"
 
 #include "rrpc.h"
 #include "echo.pb.h"
@@ -21,9 +21,9 @@ void EchoServiceImpl::Echo(
         const EchoRequest* request,
         EchoResponse* response,
         ::google::protobuf::Closure* done) {
-    LOG(INFO) << "++++++++++++++++++++= echo method called";
+    LOG(INFO) << "++++++++++ echo method called";
     if (request->has_message()) {
-        LOG(INFO) << "+++++++++++++ message: " << request->message();
+        LOG(INFO) << "++++++++++ message: " << request->message();
         response->set_message("message response by EchoServiceImpl");
     }
 }

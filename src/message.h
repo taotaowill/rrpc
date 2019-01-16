@@ -13,7 +13,7 @@ typedef boost::shared_ptr<RpcMessage> RpcMessagePtr;
 
 struct RpcMessage {
     uint32_t src_id;
-    uint32_t dst_id;
+    uint32_t dst_id; // dst_id > 0 means message client -> server
     RpcMeta meta;
     muduo::string data;
 

@@ -15,8 +15,8 @@ using muduo::net::TcpConnectionPtr;
 
 struct RpcConnection {
     std::string conn_name;
-    uint32_t conn_id;
-    uint32_t conn_type;
+    // conn_id < 0 client; conn_id > 0 server
+    int32_t conn_id;
     bool checked;
     TcpConnectionPtr conn;
     muduo::string buff;

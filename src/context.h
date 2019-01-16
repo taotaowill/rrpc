@@ -15,7 +15,8 @@ public:
         service_ = service;
         // get methods
         for (int i = 0; i < service_->GetDescriptor()->method_count(); ++i) {
-            const MethodDescriptor* method = service_->GetDescriptor()->method(i);
+            const MethodDescriptor* method = \
+                    service_->GetDescriptor()->method(i);
             LOG(INFO) << "method: " << method->full_name();
             methods_[method->full_name()] = method;
         }
@@ -34,12 +35,17 @@ public:
     }
 
     const MethodDescriptor* GetMethod(std::string& method_name) {
-        std::map<std::string, const MethodDescriptor*>::iterator it = methods_.find(method_name);
+        std::map<std::string, const MethodDescriptor*>::iterator it = \
+                methods_.find(method_name);
         if (it == methods_.end()) {
             return NULL;
         }
 
-        return NULL;
+        return it->second;
+    }
+
+    Service* GetService() {
+        return service_;
     }
 
 private:

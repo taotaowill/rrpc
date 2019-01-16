@@ -30,7 +30,7 @@ typedef
                 BOOST_MULTI_INDEX_MEMBER(RpcConnection, std::string, conn_name)>,
             ordered_non_unique<
                 tag<rpc_conn_id>,
-                BOOST_MULTI_INDEX_MEMBER(RpcConnection, uint32_t, conn_id)>
+                BOOST_MULTI_INDEX_MEMBER(RpcConnection, int32_t, conn_id)>
         >
     > RpcConnectionContainer;
 
@@ -40,7 +40,8 @@ public:
     bool Insert(RpcConnectionPtr conn);
     void Remove(std::string conn_name);
     bool Exist(std::string conn_name);
-    RpcConnectionPtr GetByName(std::string conn_name);
+    RpcConnectionPtr Get(std::string conn_name);
+    RpcConnectionPtr Get(int32_t conn_id);
 
 private:
     Mutex mutex_;

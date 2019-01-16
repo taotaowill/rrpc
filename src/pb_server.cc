@@ -44,7 +44,6 @@ void RpcPbServer::OnConnection(const TcpConnectionPtr &conn) {
     rpc_conn_->conn = conn;
     rpc_conn_->buff = "";
     RpcConnectionMeta meta;
-    meta.conn_type = RPC_CONNECTION_TYPE_SERVER;
     meta.conn_id = 100045;
     meta.crc = 1;
     size_t size = sizeof(meta);
@@ -84,9 +83,24 @@ void RpcPbServer::ParseMessage() {
 }
 
 void RpcPbServer::ProcessRequest(RpcMessagePtr message) {
+    MutexLock lock(&mutex_);
     LOG(INFO) << "=========== start process request";
     LOG(INFO) << "message_meta: " << message->meta.DebugString();
     LOG(INFO) << "message_data: " << message->data;
+    std::string method_name = message->meta.method();
+    ServiceContext* service = RetrieveService(method_name);
+    if (service != NULL) {
+        const MethodDescriptor* method = service->GetMethod(method_name);
+        if (method != NULL) {
+            LOG(INFO) << "method find +++++++++++++++++++++++";
+            google::protobuf::Message* request = service->GetService()->GetRequestPrototype(method).New();
+            std::string data(message->data.c_str(), message->data.size());
+            request->ParseFromString(data);
+            google::protobuf::Message* response = service->GetService()->GetResponsePrototype(method).New();
+            service->GetService()->CallMethod(method, NULL, request, response, NULL);
+            LOG(INFO) << "------ response " << response->DebugString();
+        }
+    }
 }
 
 }  // namespace rrpc

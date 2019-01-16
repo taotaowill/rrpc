@@ -3,7 +3,7 @@
 #include "boost/smart_ptr.hpp"
 
 #define RPC_CONNECTION_META_MAGIC 1096041805u  // META
-#define RPC_CONNECTION_META_SIZE 16
+#define RPC_CONNECTION_META_SIZE 12
 
 namespace rrpc {
 
@@ -17,13 +17,12 @@ struct RpcConnectionMeta {
         char magic_str[4];
         uint32_t magic_str_value;
     };
-    uint32_t conn_type;
-    uint32_t conn_id;
+    int32_t conn_id;
     uint32_t crc;
 
     RpcConnectionMeta() :
         magic_str_value(RPC_CONNECTION_META_MAGIC),
-        conn_type(0), conn_id(0), crc(1) {}
+        conn_id(0), crc(1) {}
 
     bool Check() const {
         if (magic_str_value == RPC_CONNECTION_META_MAGIC

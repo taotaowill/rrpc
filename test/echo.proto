@@ -5,10 +5,13 @@ option cc_generic_services = true;
 
 message EchoRequest {
     optional string message = 1;
+    optional int64 timestamp = 2;
 }
 
 message EchoResponse {
     optional string message = 1;
+    optional int64 timestamp = 2;
+
 }
 
 service EchoService {

@@ -35,7 +35,7 @@ void RpcPbServer::OnConnection(const TcpConnectionPtr &conn) {
     std::string conn_name(conn->name().c_str());
     // lost connection
     if (!conn->connected()) {
-      LOG(ERROR) << "========== lost connection to proxy";
+      LOG(ERROR) << "========== lost connection to proxy ============";
       // TODO reconnect
     }
 
@@ -84,7 +84,6 @@ void RpcPbServer::ParseMessage() {
 
 void RpcPbServer::ProcessRequest(RpcMessagePtr message) {
     MutexLock lock(&mutex_);
-    LOG(INFO) << "=========== start process request";
     LOG(INFO) << "message_meta: " << message->meta.DebugString();
     LOG(INFO) << "message_data: " << message->data;
     std::string method_name = message->meta.method();
@@ -92,13 +91,24 @@ void RpcPbServer::ProcessRequest(RpcMessagePtr message) {
     if (service != NULL) {
         const MethodDescriptor* method = service->GetMethod(method_name);
         if (method != NULL) {
-            LOG(INFO) << "method find +++++++++++++++++++++++";
             google::protobuf::Message* request = service->GetService()->GetRequestPrototype(method).New();
             std::string data(message->data.c_str(), message->data.size());
             request->ParseFromString(data);
             google::protobuf::Message* response = service->GetService()->GetResponsePrototype(method).New();
             service->GetService()->CallMethod(method, NULL, request, response, NULL);
             LOG(INFO) << "------ response " << response->DebugString();
+            // send response to proxy
+            RpcMessage ret_message;
+            ret_message.src_id = message->dst_id;
+            ret_message.dst_id = message->src_id;
+            ret_message.meta.CopyFrom(message->meta);
+            std::string buff;
+            response->SerializeToString(&buff);
+            ret_message.data = buff.c_str();
+            uint32_t size;
+            void* send_buff = ret_message.Packaging(size);
+            rpc_conn_->conn->send(send_buff, size);
+            LOG(INFO) << "response send to proxy ok";
         }
     }
 }

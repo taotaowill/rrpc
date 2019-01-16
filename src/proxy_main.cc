@@ -1,6 +1,6 @@
-#include "muduo/net/EventLoop.h"
-
 #include <unistd.h>
+
+#include "muduo/net/EventLoop.h"
 
 #include "proxy.h"
 #include "proxy_gflags.h"

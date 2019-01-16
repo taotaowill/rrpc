@@ -3,6 +3,7 @@
 #include "boost/bind.hpp"
 #include "boost/smart_ptr.hpp"
 #include "common/thread.h"
+#include "common/timer.h"
 #include "gtest/gtest.h"
 #include "muduo/base/Timestamp.h"
 #include "muduo/net/Buffer.h"
@@ -40,6 +41,8 @@ void onConnection(const TcpConnectionPtr &conn) {
 void onMessage(const TcpConnectionPtr &conn,
                Buffer *buf,
                Timestamp time) {
+    int32_t now_time = baidu::common::timer::now_time();
+    LOG(INFO) << "now_time: " << now_time;
     muduo::string msg(buf->retrieveAllAsString());
     LOG(INFO) << conn->name() << " echo " << msg.size() << " bytes, "
               << "data received at " << time.toString();

@@ -90,7 +90,7 @@ env.Program(
 
 # unittest
 env.Program(
-    'test_rpc_proxy',
+    'test_proxy',
     [
       'test/test_proxy.cc',
       'test/echo.pb.cc',
@@ -101,7 +101,7 @@ env.Program(
 )
 
 env.Program(
-    'test_rpc_server',
+    'test_server',
     [
         'test/test_server.cc',
         'test/echo.pb.cc',

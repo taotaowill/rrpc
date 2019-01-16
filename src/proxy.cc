@@ -1,14 +1,15 @@
-#include "boost/bind.hpp"
-#include "glog/logging.h"
+#include "proxy.h"
 
 #include <string>
 
+#include "boost/bind.hpp"
+#include "glog/logging.h"
+
 #include "connection.h"
 #include "connection_manager.h"
+#include "message.h"
 #include "message_header.h"
 #include "pb_message_parser.h"
-#include "proxy.h"
-#include "message.h"
 
 namespace rrpc {
 
@@ -116,18 +117,11 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
 
 void RpcProxy::DispatchMessage(RpcMessagePtr message) {
     MutexLock lock(&mutex_);
-    LOG(INFO) << "message_src_id: " << message->src_id;
-    LOG(INFO) << "message_dst_id: " << message->dst_id;
-    LOG(INFO) << "message_meta: " << message->meta.DebugString();
-    LOG(INFO) << "message_data: " << message->data;
-    LOG(INFO) << "send client request to server";
-
     RpcConnectionPtr rpc_conn = conn_manager_->Get(message->dst_id);
     if (rpc_conn) {
         uint32_t size;
         void* send_buff = message->Packaging(size);
         rpc_conn->conn->send(send_buff, size);
-        LOG(INFO) << "rpc_conn find by id";
     } else {
         LOG(WARNING) << "dst_id is not exit, dst_id: " << message->dst_id;
     }

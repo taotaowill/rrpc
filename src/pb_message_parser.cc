@@ -28,6 +28,8 @@ int RpcPbMessageParser::Parse() {
             } else {
                 *buff_ = buff_->substr(RPC_MESSAGE_HEADER_SIZE);
                 stage_ = PARSING_BODY;
+                message_.src_id = header_.src_id;
+                message_.dst_id = header_.dst_id;
                 LOG(INFO) << "header parse ok"
                     << ", src_id: " << header_.src_id
                     << ", dst_id: " << header_.dst_id

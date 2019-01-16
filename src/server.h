@@ -48,6 +48,7 @@ public:
             return NULL;
         }
 
+        LOG(INFO) << "service found +++++++++++++++++++";
         return it->second;
     }
 

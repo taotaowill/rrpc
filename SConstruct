@@ -67,11 +67,6 @@ env = Environment(
 
 # library
 env.Library(
-    'proto_lib',
-    Glob('src/rrpc.pb.cc')
-)
-
-env.Library(
     'rrpc_lib',
     [
         'src/connection_manager.cc',
@@ -80,6 +75,7 @@ env.Library(
         'src/pb_server.cc',
         'src/proxy_gflags.cc',
         'src/proxy.cc',
+        'src/rrpc.pb.cc',
     ],
 )
 
@@ -89,7 +85,6 @@ env.Program(
     'src/proxy_main.cc',
     LIBS=[
         'rrpc_lib',
-        'proto_lib',
     ] + env['LIBS']
 )
 
@@ -102,7 +97,6 @@ env.Program(
     ],
     LIBS=[
         'rrpc_lib',
-        'proto_lib',
     ] + env['LIBS']
 )
 
@@ -114,6 +108,5 @@ env.Program(
     ],
     LIBS=[
         'rrpc_lib',
-        'proto_lib',
     ] + env['LIBS']
 )

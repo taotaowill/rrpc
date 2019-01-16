@@ -35,7 +35,7 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
                          Timestamp time) {
     std::string conn_name(conn->name().c_str());
     LOG(INFO) << "on message, conn_name: " << conn_name;
-    RpcConnectionPtr rpc_conn = conn_manager_->GetByName(conn_name);
+    RpcConnectionPtr rpc_conn = conn_manager_->Get(conn_name);
     if (!rpc_conn) {
         LOG(INFO) << "rpc_conn not found";
         return;
@@ -84,15 +84,16 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
                 break;
             case 1:
                 meta = rpc_conn->meta_parser->GetMeta();
-                //// echo back
-                //rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
+                // echo back to client
+                if (meta->conn_id < 0) {
+                    rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
+                }
+
                 // modify rpc_conn
                 rpc_conn->conn_id = meta->conn_id;
-                rpc_conn->conn_type = meta->conn_type;
                 rpc_conn->checked = true;
                 LOG(INFO) << "conn meta parsed ok"
-                          << ", conn_id: " << rpc_conn->conn_id
-                          << ", conn_type: " << rpc_conn->conn_type;
+                          << ", conn_id: " << rpc_conn->conn_id;
 
                 // reset data
                 rpc_conn->buff.clear();
@@ -114,8 +115,22 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
 }
 
 void RpcProxy::DispatchMessage(RpcMessagePtr message) {
+    MutexLock lock(&mutex_);
+    LOG(INFO) << "message_src_id: " << message->src_id;
+    LOG(INFO) << "message_dst_id: " << message->dst_id;
     LOG(INFO) << "message_meta: " << message->meta.DebugString();
     LOG(INFO) << "message_data: " << message->data;
+    LOG(INFO) << "send client request to server";
+
+    RpcConnectionPtr rpc_conn = conn_manager_->Get(message->dst_id);
+    if (rpc_conn) {
+        uint32_t size;
+        void* send_buff = message->Packaging(size);
+        rpc_conn->conn->send(send_buff, size);
+        LOG(INFO) << "rpc_conn find by id";
+    } else {
+        LOG(WARNING) << "dst_id is not exit, dst_id: " << message->dst_id;
+    }
 }
 
 }  // namespace rrpc

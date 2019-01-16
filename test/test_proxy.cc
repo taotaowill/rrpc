@@ -25,33 +25,33 @@ void onConnection(const TcpConnectionPtr &conn) {
     }
 
     RpcConnectionMeta meta;
-    meta.conn_type = RPC_CONNECTION_TYPE_CLIENT;
-    meta.conn_id = 100045;
+    meta.conn_id = -1;
     meta.crc = 1;
 
-    char* data = new char[16];
-    memset(data, 0, sizeof(16));
-    memcpy(data, &meta, sizeof(meta));
-    conn->send(reinterpret_cast<void*>(data), 16);
+    size_t size = sizeof(meta);
+    char* data = new char[size];
+    memset(data, 0, size);
+    memcpy(data, &meta, size);
+    conn->send(reinterpret_cast<void*>(data), size);
     LOG(INFO) << "EchoClient conn meta sended to proxy";
 }
 
+// receive proxy echo back(validation)
 void onMessage(const TcpConnectionPtr &conn,
                Buffer *buf,
                Timestamp time) {
     muduo::string msg(buf->retrieveAllAsString());
     LOG(INFO) << conn->name() << " echo " << msg.size() << " bytes, "
               << "data received at " << time.toString();
-    if (msg.size() != 16) {
+    if (msg.size() != RPC_CONNECTION_META_SIZE) {
         return;
     }
 
     RpcMessage message;
     RpcMeta* meta = new RpcMeta();
     meta->set_sequence_id(123);
-    meta->set_method("rrpc::test::EchoService::Echo");
+    meta->set_method("rrpc.test.EchoService.Echo");
     message.meta.CopyFrom(*meta);
-
 
     rrpc::test::EchoRequest* echo_request = new rrpc::test::EchoRequest;
     echo_request->set_message("this is request from fake client");
@@ -59,7 +59,7 @@ void onMessage(const TcpConnectionPtr &conn,
     echo_request->SerializeToString(&buff);
 
     message.data = buff.c_str();
-    message.src_id = 1000000001;
+    message.src_id = -1;
     message.dst_id = 100045;
     uint32_t size;
     void* send_buff = message.Packaging(size);

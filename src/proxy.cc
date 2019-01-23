@@ -1,10 +1,8 @@
 #include "proxy.h"
 
 #include <string>
-
 #include "boost/bind.hpp"
 #include "glog/logging.h"
-
 #include "connection.h"
 #include "connection_manager.h"
 #include "message.h"
@@ -35,7 +33,8 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
                          Buffer *buf,
                          Timestamp time) {
     std::string conn_name(conn->name().c_str());
-    LOG(INFO) << "on message, conn_name: " << conn_name;
+    LOG(INFO) << "on message, conn_name: " << conn_name
+              << ", time: " << time.toString();
     RpcConnectionPtr rpc_conn = conn_manager_->Get(conn_name);
     if (!rpc_conn) {
         LOG(INFO) << "rpc_conn not found";
@@ -58,7 +57,7 @@ void RpcProxy::StartLoop() {
     InetAddress addr("0.0.0.0", static_cast<uint16_t>(port_));
     EventLoop loop;
     boost::scoped_ptr<TcpServer> t_server(
-            new TcpServer(&loop, addr, "proxy_server"));
+            new TcpServer(&loop, addr, "proxy"));
     tcp_server_.swap(t_server);
     tcp_server_->setConnectionCallback(
             boost::bind(&RpcProxy::OnConnection, this, _1));

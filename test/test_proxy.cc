@@ -75,7 +75,7 @@ void onMessage(const TcpConnectionPtr &conn,
 TEST(Proxy, main) {
     EventLoop loop;
     InetAddress addr("127.0.0.1", 8988);
-    TcpClient client(&loop, addr, "0_1_2_3");
+    TcpClient client(&loop, addr, "test_proxy");
     client.setConnectionCallback(&onConnection);
     client.setMessageCallback(&onMessage);
     client.connect();

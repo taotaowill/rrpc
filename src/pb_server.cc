@@ -91,11 +91,14 @@ void RpcPbServer::ProcessRequest(RpcMessagePtr message) {
     if (service != NULL) {
         const MethodDescriptor* method = service->GetMethod(method_name);
         if (method != NULL) {
-            google::protobuf::Message* request = service->GetService()->GetRequestPrototype(method).New();
+            google::protobuf::Message* request = \
+                    service->GetService()->GetRequestPrototype(method).New();
             std::string data(message->data.c_str(), message->data.size());
             request->ParseFromString(data);
-            google::protobuf::Message* response = service->GetService()->GetResponsePrototype(method).New();
-            service->GetService()->CallMethod(method, NULL, request, response, NULL);
+            google::protobuf::Message* response = \
+                    service->GetService()->GetResponsePrototype(method).New();
+            service->GetService()->CallMethod(
+                    method, NULL, request, response, NULL);
             LOG(INFO) << "------ response " << response->DebugString();
             // send response to proxy
             RpcMessage ret_message;

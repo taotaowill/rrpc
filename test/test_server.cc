@@ -31,8 +31,9 @@ void EchoServiceImpl::Echo(
 TEST(Server, main) {
     std::string proxy_ip = "127.0.0.1";
     int32_t proxy_port = 8988;
+    int32_t rpc_server_id = 100045;
     rrpc::RpcServer* rpc_server = \
-        new rrpc::RpcPbServer(proxy_ip, proxy_port);
+        new rrpc::RpcPbServer(proxy_ip, proxy_port, rpc_server_id);
     ASSERT_TRUE(rpc_server->Start());
     EchoService* service = new EchoServiceImpl();
     ASSERT_TRUE(rpc_server->RegisterService(static_cast<EchoService*>(service)));

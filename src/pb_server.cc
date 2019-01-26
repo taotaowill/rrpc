@@ -2,19 +2,21 @@
 
 #include "boost/bind.hpp"
 
-#include "rrpc.h"
+#include "message.h"
 
 namespace rrpc {
 
-RpcPbServer::RpcPbServer(std::string proxy_ip, int32_t proxy_port) :
-    proxy_(proxy_ip, proxy_port),
-    loop_pool_(1),
-    rpc_conn_(new RpcConnection()) {
+RpcPbServer::RpcPbServer(std::string proxy_ip,
+                         int32_t proxy_port,
+                         int32_t rpc_id) :
+        loop_pool_(1),
+        rpc_proxy_(proxy_ip, proxy_port),
+        rpc_conn_(new RpcConnection()),
+        rpc_id_(rpc_id) {
 }
 
 void RpcPbServer::StartLoop() {
-    EventLoop loop;
-    TcpClient client(&loop, proxy_, "pb_server");
+    EventLoop loop; TcpClient client(&loop, rpc_proxy_, "pb_server");
     client.setConnectionCallback(
           boost::bind(&RpcPbServer::OnConnection, this, _1));
     client.setMessageCallback(
@@ -39,12 +41,11 @@ void RpcPbServer::OnConnection(const TcpConnectionPtr &conn) {
       // TODO reconnect
     }
 
-    // send meta
     rpc_conn_->conn_name = conn_name;
     rpc_conn_->conn = conn;
     rpc_conn_->buff = "";
     RpcConnectionMeta meta;
-    meta.conn_id = 100045;
+    meta.conn_id = rpc_id_;
     meta.crc = 1;
     size_t size = sizeof(meta);
     char* data = new char[size];
@@ -77,12 +78,12 @@ void RpcPbServer::ParseMessage() {
     int ret = rpc_conn_->message_parser->Parse();
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn_->message_parser->GetMessage();
-        dispatch_pool_.AddTask(
-              boost::bind(&RpcPbServer::ProcessRequest, this, message));
+        process_pool_.AddTask(
+              boost::bind(&RpcPbServer::ProcessMessage, this, message));
     }
 }
 
-void RpcPbServer::ProcessRequest(RpcMessagePtr message) {
+void RpcPbServer::ProcessMessage(RpcMessagePtr message) {
     MutexLock lock(&mutex_);
     LOG(INFO) << "message_meta: " << message->meta.DebugString();
     LOG(INFO) << "message_data: " << message->data;
@@ -99,7 +100,9 @@ void RpcPbServer::ProcessRequest(RpcMessagePtr message) {
                     service->GetService()->GetResponsePrototype(method).New();
             service->GetService()->CallMethod(
                     method, NULL, request, response, NULL);
+
             LOG(INFO) << "------ response " << response->DebugString();
+
             // send response to proxy
             RpcMessage ret_message;
             ret_message.src_id = message->dst_id;

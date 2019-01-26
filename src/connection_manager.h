@@ -17,7 +17,6 @@ using baidu::common::MutexLock;
 using boost::multi_index_container;
 using namespace boost::multi_index;
 
-
 struct rpc_conn_name {};   // index name
 struct rpc_conn_id {};
 

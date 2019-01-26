@@ -28,7 +28,7 @@ using muduo::net::TcpConnectionPtr;
 
 class RpcProxy {
 public:
-    RpcProxy(int port);
+    RpcProxy(std::string ip, int port);
     ~RpcProxy() {};
     bool Start();
     void Stop();
@@ -40,11 +40,14 @@ private:
                    Buffer *buf,
                    Timestamp time);
     void ParseMessage(RpcConnectionPtr rpc_conn);
-    void DispatchMessage(RpcMessagePtr message);
+    void ProcessMessage(RpcMessagePtr message);
 
 private:
     Mutex mutex_;
+    std::string ip_;
     int32_t port_;
+    int32_t rpc_id_;
+
     ThreadPool loop_pool_;
     ThreadPool parse_pool_;
     ThreadPool dispatch_pool_;

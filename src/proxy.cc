@@ -1,7 +1,6 @@
 #include "proxy.h"
 
 #include <string>
-
 #include "boost/bind.hpp"
 #include "glog/logging.h"
 
@@ -13,8 +12,8 @@
 
 namespace rrpc {
 
-RpcProxy::RpcProxy(int port) :
-    port_(port), conn_manager_(new RpcConnectionManager()) {
+RpcProxy::RpcProxy(std::string ip, int port) :
+    ip_(ip), port_(port), conn_manager_(new RpcConnectionManager()) {
 }
 
 void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
@@ -35,7 +34,8 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
                          Buffer *buf,
                          Timestamp time) {
     std::string conn_name(conn->name().c_str());
-    LOG(INFO) << "on message, conn_name: " << conn_name;
+    LOG(INFO) << "on message, conn_name: " << conn_name
+              << ", time: " << time.toString();
     RpcConnectionPtr rpc_conn = conn_manager_->Get(conn_name);
     if (!rpc_conn) {
         LOG(INFO) << "rpc_conn not found";
@@ -55,10 +55,10 @@ bool RpcProxy::Start() {
 }
 
 void RpcProxy::StartLoop() {
-    InetAddress addr("0.0.0.0", static_cast<uint16_t>(port_));
+    InetAddress addr(ip_, static_cast<uint16_t>(port_));
     EventLoop loop;
     boost::scoped_ptr<TcpServer> t_server(
-            new TcpServer(&loop, addr, "proxy_server"));
+            new TcpServer(&loop, addr, "proxy"));
     tcp_server_.swap(t_server);
     tcp_server_->setConnectionCallback(
             boost::bind(&RpcProxy::OnConnection, this, _1));
@@ -87,6 +87,7 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
                 meta = rpc_conn->meta_parser->GetMeta();
                 // echo back to client
                 if (meta->conn_id < 0) {
+                    LOG(INFO) << "echo rpc conn meta back";
                     rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
                 }
 
@@ -111,17 +112,18 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn->message_parser->GetMessage();
         dispatch_pool_.AddTask(
-            boost::bind(&RpcProxy::DispatchMessage, this, message));
+            boost::bind(&RpcProxy::ProcessMessage, this, message));
     }
 }
 
-void RpcProxy::DispatchMessage(RpcMessagePtr message) {
+void RpcProxy::ProcessMessage(RpcMessagePtr message) {
     MutexLock lock(&mutex_);
     RpcConnectionPtr rpc_conn = conn_manager_->Get(message->dst_id);
     if (rpc_conn) {
         uint32_t size;
         void* send_buff = message->Packaging(size);
         rpc_conn->conn->send(send_buff, size);
+        LOG(INFO) << "";
     } else {
         LOG(WARNING) << "dst_id is not exit, dst_id: " << message->dst_id;
     }

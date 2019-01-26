@@ -16,7 +16,7 @@ env_gen = Environment(
 env_gen.MetaProtoc(
     [
         'src/rrpc.pb.h',
-        'src/rrpc.pb.cc'
+        'src/rrpc.pb.cc',
     ],
     Glob('src/proto/*.proto')
 )
@@ -69,13 +69,15 @@ env = Environment(
 env.Library(
     'rrpc_lib',
     [
+        'src/channel.cc',
+        'src/client.cc',
         'src/connection_manager.cc',
         'src/connection_meta_parser.cc',
         'src/pb_message_parser.cc',
         'src/pb_server.cc',
-        'src/proxy_gflags.cc',
         'src/proxy.cc',
         'src/rrpc.pb.cc',
+        'src/rrpc_gflags.cc',
     ],
 )
 
@@ -92,8 +94,8 @@ env.Program(
 env.Program(
     'test_proxy',
     [
-      'test/test_proxy.cc',
       'test/echo.pb.cc',
+      'test/test_proxy.cc',
     ],
     LIBS=[
         'rrpc_lib',
@@ -103,8 +105,19 @@ env.Program(
 env.Program(
     'test_server',
     [
-        'test/test_server.cc',
         'test/echo.pb.cc',
+        'test/test_server.cc',
+    ],
+    LIBS=[
+        'rrpc_lib',
+    ] + env['LIBS']
+)
+
+env.Program(
+    'test_client',
+    [
+        'test/echo.pb.cc',
+        'test/test_client.cc',
     ],
     LIBS=[
         'rrpc_lib',

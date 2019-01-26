@@ -12,8 +12,8 @@ class RpcMessage;
 typedef boost::shared_ptr<RpcMessage> RpcMessagePtr;
 
 struct RpcMessage {
-    uint32_t src_id;
-    uint32_t dst_id; // dst_id > 0 means message client -> server
+    int32_t src_id;
+    int32_t dst_id; // dst_id > 0 means message client -> server
     RpcMeta meta;
     muduo::string data;
 
@@ -28,6 +28,7 @@ struct RpcMessage {
         header.crc = 0;
         uint32_t body_size = header.meta_size + header.data_size;
         size = body_size + RPC_MESSAGE_HEADER_SIZE;
+        // TODO malloc once
         void* buff = malloc(size);
         memset(buff, 0, size);
         memcpy(buff, &header, RPC_MESSAGE_HEADER_SIZE);

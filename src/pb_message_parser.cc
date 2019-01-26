@@ -56,8 +56,6 @@ int RpcPbMessageParser::Parse() {
                 << ", sequence_id: " << message_.meta.sequence_id()
                 << ", method: " << message_.meta.method();
             message_.data = buff_->substr(header_.meta_size, header_.data_size);
-            LOG(INFO) << "data parse ok"
-                << ", data: " << message_.data;
             *buff_ = buff_->substr(header_.meta_size + header_.data_size);
             message_list_.push_back(message_);
             stage_ = PARSING_HEADER;

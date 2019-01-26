@@ -10,7 +10,6 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpConnection.h"
 
-#include "rrpc.h"
 #include "connection.h"
 #include "connection_manager.h"
 
@@ -23,7 +22,9 @@ using namespace muduo::net;
 
 class RpcPbServer : public RpcServer {
 public:
-    RpcPbServer(std::string proxy_ip, int32_t proxy_port);
+    RpcPbServer(std::string proxy_ip,
+                int32_t proxy_port,
+                int32_t rpc_id);
     ~RpcPbServer() {};
     bool Start();
     void Stop();
@@ -36,15 +37,16 @@ private:
                    Buffer *buf,
                    Timestamp time);
     void ParseMessage();
-    void ProcessRequest(RpcMessagePtr message);
+    void ProcessMessage(RpcMessagePtr message);
 
 private:
     Mutex mutex_;
-    InetAddress proxy_;
     ThreadPool loop_pool_;
     ThreadPool parse_pool_;
-    ThreadPool dispatch_pool_;
+    ThreadPool process_pool_;
+    InetAddress rpc_proxy_;
     RpcConnectionPtr rpc_conn_;
+    int32_t rpc_id_;
 };
 
 }  // namespace rrpc

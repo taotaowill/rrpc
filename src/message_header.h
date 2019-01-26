@@ -14,8 +14,8 @@ struct RpcMessageHeader {
     };
     uint32_t meta_size;
     uint64_t data_size;
-    uint32_t src_id;
-    uint32_t dst_id;
+    int32_t src_id;
+    int32_t dst_id;
     uint32_t crc;
 
     RpcMessageHeader()

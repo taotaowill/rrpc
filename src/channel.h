@@ -51,6 +51,7 @@ private:
         MutexLock lock(&mutex_);
         return sequence_id_++;
     }
+    void CallbackFunc();
 
 private:
     Mutex mutex_;
@@ -63,6 +64,7 @@ private:
     ThreadPool loop_pool_;
     ThreadPool parse_pool_;
     ThreadPool process_pool_;
+    ThreadPool callback_pool_;
     InetAddress rpc_proxy_;
     RpcClient* rpc_client_;
     RpcConnectionPtr rpc_conn_;

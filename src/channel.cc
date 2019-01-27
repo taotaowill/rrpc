@@ -25,7 +25,12 @@ RpcChannel::RpcChannel(std::string proxy_ip,
         rpc_client_(rpc_client),
         rpc_conn_(new RpcConnection()),
         connected_(false) {
+    send_buff_ = malloc(SEND_BUFF_MAX_SIZE);
     loop_pool_.AddTask(boost::bind(&RpcChannel::StartLoop, this));
+}
+
+RpcChannel::~RpcChannel() {
+    free(send_buff_);
 }
 
 void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
@@ -34,27 +39,24 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
                             ::google::protobuf::Message* response,
                             ::google::protobuf::Closure* done) {
     RpcMessage message;
-    RpcMeta* meta = new RpcMeta();
+    RpcMeta meta;
     int32_t sequence_id = GetSequenceId();
-    meta->set_sequence_id(sequence_id);
-    meta->set_method(method->full_name());
-    message.meta.CopyFrom(*meta);
+    meta.set_sequence_id(sequence_id);
+    meta.set_method(method->full_name());
+    message.meta.CopyFrom(meta);
     std::string buff;
     request->SerializeToString(&buff);
     message.data = buff.c_str();
     message.src_id = rpc_src_id_;
     message.dst_id = rpc_dst_id_;
     uint32_t size;
-    void* send_buff = message.Packaging(size);
-
+    void* send_buff = message.Packaging(send_buff_, size);
     {
         MutexLock lock(&mutex_);
         rpc_conn_->conn->send(send_buff, size);
     }
-
     LOG(INFO) << "rpc_channel send message to proxy";
     free(send_buff);
-
     {
         MutexLock lock(&mutex_);
         requests_[sequence_id] = method;
@@ -80,10 +82,7 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
             usleep(10000);
         }
     }
-
     controller->SetFailed("timeout");
-
-    return;
 }
 
 void RpcChannel::StartLoop() {

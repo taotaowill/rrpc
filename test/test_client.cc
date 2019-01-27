@@ -11,17 +11,41 @@ TEST(Client, CallMethod) {
     rrpc::RpcClient client("127.0.0.1", 8988, rpc_client_id);
     rrpc::test::EchoService_Stub* stub;
     bool ret = client.GetStub(&stub, rpc_server_id);
+    usleep(10000);
+
+    // 1st request
     rrpc::test::EchoRequest request;
     request.set_message("hello rpc");
     rrpc::test::EchoResponse response;
-    usleep(10000);
     ret = client.SendRequest(
             stub,
             &rrpc::test::EchoService_Stub::Echo,
-            &request, &response,
+            &request,
+            &response,
             5,
             1);
-    LOG(INFO) << "response: " << response.DebugString();
+    if (!ret) {
+        LOG(WARNING) << "SendRequest failed";
+    } else {
+        LOG(INFO) << "response: " << response.DebugString();
+    }
+
+    // 2nd request
+    rrpc::test::EchoRequest request_a;
+    rrpc::test::EchoResponse response_a;
+    ret = client.SendRequest(
+            stub,
+            &rrpc::test::EchoService_Stub::Echo,
+            &request_a,
+            &response_a,
+            5,
+            1);
+    if (!ret) {
+        LOG(WARNING) << "SendRequest failed";
+    } else {
+        LOG(INFO) << "response: " << response.DebugString();
+    }
+
     LOG(INFO) << "Test client done";
     usleep(10000000);
 }

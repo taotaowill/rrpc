@@ -12,6 +12,8 @@
 
 #include "connection.h"
 
+const int32_t SEND_BUFF_MAX_SIZE = 10 * 1024 * 1024; // 10M
+
 namespace rrpc {
 
 using baidu::common::Mutex;
@@ -29,7 +31,7 @@ public:
                int32_t rpc_src_id,
                int32_t rpc_dst_id,
                RpcClient* rcp_client);
-    ~RpcChannel() {}
+    ~RpcChannel();
     void CallMethod(const ::google::protobuf::MethodDescriptor* method,
                     ::google::protobuf::RpcController* controller,
                     const ::google::protobuf::Message* request,
@@ -56,6 +58,8 @@ private:
     int32_t sequence_id_;
     int32_t rpc_src_id_;
     int32_t rpc_dst_id_;
+    void* send_buff_;
+
     ThreadPool loop_pool_;
     ThreadPool parse_pool_;
     ThreadPool process_pool_;

@@ -50,7 +50,7 @@ private:
 
     ThreadPool loop_pool_;
     ThreadPool parse_pool_;
-    ThreadPool dispatch_pool_;
+    ThreadPool process_pool_;
     boost::scoped_ptr<TcpServer> tcp_server_;
     boost::scoped_ptr<RpcConnectionManager> conn_manager_;
 };

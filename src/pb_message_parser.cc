@@ -13,6 +13,7 @@ RpcPbMessageParser::~RpcPbMessageParser() {
 }
 
 int RpcPbMessageParser::Parse() {
+    MutexLock lock(&mutex_);
     int ret = 0;
     while (buff_->size() > 0) {
         if (stage_ == PARSING_HEADER) {
@@ -67,6 +68,7 @@ int RpcPbMessageParser::Parse() {
 }
 
 RpcMessagePtr RpcPbMessageParser::GetMessage() {
+    MutexLock lock(&mutex_);
     if (message_list_.size() > 0) {
         RpcMessage message = message_list_.front();
         message_list_.pop_front();

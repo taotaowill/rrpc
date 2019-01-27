@@ -1,13 +1,13 @@
 #include "proxy.h"
 
 #include <string>
+
 #include "boost/bind.hpp"
 #include "glog/logging.h"
 
 #include "connection.h"
 #include "connection_manager.h"
 #include "message.h"
-#include "message_header.h"
 #include "pb_message_parser.h"
 
 namespace rrpc {
@@ -111,7 +111,7 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     int ret = rpc_conn->message_parser->Parse();
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn->message_parser->GetMessage();
-        dispatch_pool_.AddTask(
+        process_pool_.AddTask(
             boost::bind(&RpcProxy::ProcessMessage, this, message));
     }
 }
@@ -123,7 +123,8 @@ void RpcProxy::ProcessMessage(RpcMessagePtr message) {
         uint32_t size;
         void* send_buff = message->Packaging(size);
         rpc_conn->conn->send(send_buff, size);
-        LOG(INFO) << "";
+        LOG(INFO) << "send to dst ok, dst_id: " << message->dst_id
+                  << ", data_size: " << size;
     } else {
         LOG(WARNING) << "dst_id is not exit, dst_id: " << message->dst_id;
     }

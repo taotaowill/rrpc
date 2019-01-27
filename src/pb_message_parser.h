@@ -2,6 +2,7 @@
 
 #include <deque>
 
+#include "common/mutex.h"
 #include "boost/smart_ptr.hpp"
 #include "muduo/base/Types.h"
 
@@ -9,6 +10,9 @@
 #include "message.h"
 
 namespace rrpc {
+
+using baidu::common::Mutex;
+using baidu::common::MutexLock;
 
 enum ParsingStage {
     PARSING_HEADER = 0,
@@ -23,6 +27,7 @@ public:
     RpcMessagePtr GetMessage();
 
 private:
+    Mutex mutex_;
     muduo::string* buff_;
     ParsingStage stage_;
     RpcMessageHeader header_;

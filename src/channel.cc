@@ -21,12 +21,14 @@ RpcChannel::RpcChannel(std::string proxy_ip,
         sequence_id_(0),
         rpc_src_id_(rpc_src_id),
         rpc_dst_id_(rpc_dst_id),
+        callback_pool_(1),
         rpc_proxy_(proxy_ip, proxy_port),
         rpc_client_(rpc_client),
         rpc_conn_(new RpcConnection()),
         connected_(false) {
     send_buff_ = malloc(SEND_BUFF_MAX_SIZE);
     loop_pool_.AddTask(boost::bind(&RpcChannel::StartLoop, this));
+    //callback_pool_.AddTask(boost::bind(&RpcChannel::CallbackFunc, this));
 }
 
 RpcChannel::~RpcChannel() {
@@ -68,21 +70,44 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     LOG(INFO) << "now_time: " << now_time;
     int32_t timeout = now_time + rpc_controller->GetTimeout();
     LOG(INFO) << "timeout: " << timeout;
-    if (NULL == done) {
-        while (now_time < timeout) {
-            now_time = baidu::common::timer::now_time();
-            LOG(INFO) << "sync wait: " << now_time;
-            std::map<int32_t, google::protobuf::Message*>::iterator it = \
-                    responses_.find(sequence_id);
-            if (it != responses_.end()) {
-                response = it->second;
-                return;
-            }
 
-            usleep(10000);
+    while (now_time < timeout) {
+        now_time = baidu::common::timer::now_time();
+        LOG(INFO) << "sync wait: " << now_time;
+        std::map<int32_t, google::protobuf::Message*>::iterator it = \
+                responses_.find(sequence_id);
+        if (it != responses_.end()) {
+            response = it->second;
+            responses_.erase(sequence_id);
+            if (done != NULL) {
+                done->Run();
+            }
+            return;
         }
+
+        usleep(10000);
     }
+
     controller->SetFailed("timeout");
+    return;
+
+    //if (NULL == done) {
+    //    while (now_time < timeout) {
+    //        now_time = baidu::common::timer::now_time();
+    //        LOG(INFO) << "sync wait: " << now_time;
+    //        std::map<int32_t, google::protobuf::Message*>::iterator it = \
+    //                responses_.find(sequence_id);
+    //        if (it != responses_.end()) {
+    //            response = it->second;
+    //            responses_.erase(sequence_id);
+    //            return;
+    //        }
+
+    //        usleep(10000);
+    //    }
+    //    controller->SetFailed("timeout");
+    //    return;
+    //}
 }
 
 void RpcChannel::StartLoop() {
@@ -181,6 +206,8 @@ void RpcChannel::ProcessMessage(RpcMessagePtr message) {
     std::string data(message->data.c_str(), message->data.size());
     response->ParseFromString(data);
     LOG(INFO) << "response debug_string: " << response->DebugString();
+    // remove from requests_
+    requests_.erase(sequence_id);
     responses_[sequence_id] = response;
 }
 

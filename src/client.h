@@ -7,7 +7,9 @@
 #include "common/thread_pool.h"
 #include "glog/logging.h"
 
+
 #include "channel.h"
+#include "closure.h"
 #include "controller.h"
 
 namespace rrpc {
@@ -69,6 +71,7 @@ public:
         return false;
     }
 
+
     template <class Stub, class Request, class Response, class Callback>
     void AsyncRequest(
             Stub* stub,
@@ -78,7 +81,9 @@ public:
             boost::function<void (const Request*, Response*, bool, int)> callback,
             int32_t rpc_timeout, int /*retry_times*/) {
         RpcController* controller = new RpcController();
-        google::protobuf::Closure* done = NULL;
+        google::protobuf::Closure* done = NewClosure(
+                &RpcClient::template RpcCallback<Request, Response, Callback>,
+                controller, request, response, callback);
         (stub->*func)(controller, request, response, done);
     }
 
@@ -88,6 +93,7 @@ public:
             const Request* request,
             Response* response,
             boost::function<void (const Request*, Response*, bool, int)> callback) {
+        LOG(INFO) << "+++++++++++++++++ done run call";
         bool failed = rpc_controller->Failed();
         if (failed) {
             LOG(WARNING) << "RpcCallback: "

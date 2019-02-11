@@ -147,7 +147,7 @@ if [ ! -f "${FLAG_DIR}/common" ] \
     rm -rf common
     git clone https://github.com/baidu/common
     cd common
-    sed -i 's/^INCLUDE_PATH=.*/INCLUDE_PATH=-Iinclude -I..\/..\/thirdparty\/boost_1_57_0/' Makefile
+    sed -i 's/^INCLUDE_PATH=.*/INCLUDE_PATH=-Iinclude -I..\/..\/third_party\/boost_1_57_0/' Makefile
     make -j4
     mkdir -p ${DEPS_PREFIX}/include/common
     cp -rf include/* ${DEPS_PREFIX}/include/common
@@ -175,7 +175,7 @@ if [ ! -f "${FLAG_DIR}/muduo" ] \
     bash build.sh install
     cp -r ../build/release-install/lib/* $DEPS_PREFIX/lib
     cp -r ../build/release-install/include/* $DEPS_PREFIX/include
-    touch "${FLAG_DIR/muduo}"
+    touch "${FLAG_DIR}/muduo"
     cd -
 fi
 

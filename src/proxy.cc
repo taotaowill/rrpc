@@ -1,7 +1,3 @@
-#include "proxy.h"
-
-#include <string>
-
 #include "boost/bind.hpp"
 #include "glog/logging.h"
 
@@ -9,11 +5,14 @@
 #include "connection_manager.h"
 #include "message.h"
 #include "pb_message_parser.h"
+#include "proxy.h"
 
 namespace rrpc {
 
 RpcProxy::RpcProxy(std::string ip, int port) :
-    ip_(ip), port_(port), conn_manager_(new RpcConnectionManager()) {
+    ip_(ip),
+    port_(port),
+    conn_manager_(new RpcConnectionManager()) {
 }
 
 void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
@@ -80,28 +79,28 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
         int ret = rpc_conn->meta_parser->Parse();
         LOG(INFO) << "meta_parser: " << ret;
         switch (ret) {
-            case -1:
-                conn_manager_->Remove(rpc_conn->conn_name);
-                break;
-            case 1:
-                meta = rpc_conn->meta_parser->GetMeta();
-                // echo back to client
-                if (meta->conn_id < 0) {
-                    LOG(INFO) << "echo rpc conn meta back";
-                    rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
-                }
+        case -1:
+            conn_manager_->Remove(rpc_conn->conn_name);
+            break;
+        case 1:
+            meta = rpc_conn->meta_parser->GetMeta();
+            // echo back to client
+            if (meta->conn_id < 0) {
+                LOG(INFO) << "echo rpc conn meta back";
+                rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
+            }
 
-                // modify rpc_conn
-                rpc_conn->conn_id = meta->conn_id;
-                rpc_conn->checked = true;
-                LOG(INFO) << "conn meta parsed ok"
-                          << ", conn_id: " << rpc_conn->conn_id;
+            // modify rpc_conn
+            rpc_conn->conn_id = meta->conn_id;
+            rpc_conn->checked = true;
+            LOG(INFO) << "conn meta parsed ok"
+                      << ", conn_id: " << rpc_conn->conn_id;
 
-                // reset data
-                rpc_conn->buff.clear();
-                break;
-            default:
-                break;
+            // reset data
+            rpc_conn->buff.clear();
+            break;
+        default:
+            break;
         }
         return;
     }

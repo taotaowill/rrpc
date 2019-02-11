@@ -40,7 +40,7 @@ struct RpcMessage {
         return buff;
     }
 
-    void* Packaging(void* buff, uint32_t& size) {
+    void Packaging(void* buff, uint32_t& size) {
         RpcMessageHeader header;
         std::string meta_string;
         meta.SerializeToString(&meta_string);
@@ -59,7 +59,7 @@ struct RpcMessage {
         memcpy(buff + RPC_MESSAGE_HEADER_SIZE + header.meta_size,
                data.c_str(),
                header.data_size);
-        return buff;
+        return;
     }
 };
 

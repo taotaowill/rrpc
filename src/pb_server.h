@@ -28,7 +28,7 @@ public:
     ~RpcPbServer() {};
     bool Start();
     void Stop();
-    bool RegisterService(google::protobuf::Service* service);
+    bool RegisterService(::google::protobuf::Service* service);
 
 private:
     void StartLoop();

@@ -14,14 +14,14 @@ static void SetupLog(const std::string name) {
     std::string info_f = FLAGS_log_dir + "/" + name + ".INFO.";
     std::string warning_f = FLAGS_log_dir + "/" + name + ".WARNING.";
     std::string error_f = FLAGS_log_dir + "/" + name + ".ERROR.";
-    google::SetLogDestination(google::INFO, info_f.c_str());
-    google::SetLogDestination(google::WARNING, warning_f.c_str());
-    google::SetLogDestination(google::ERROR, error_f.c_str());
+    ::google::SetLogDestination(google::INFO, info_f.c_str());
+    ::google::SetLogDestination(google::WARNING, warning_f.c_str());
+    ::google::SetLogDestination(google::ERROR, error_f.c_str());
 
-    google::SetLogSymlink(google::INFO, name.c_str());
-    google::SetLogSymlink(google::WARNING, name.c_str());
-    google::SetLogSymlink(google::ERROR,  name.c_str());
-    google::InstallFailureSignalHandler();
+    ::google::SetLogSymlink(google::INFO, name.c_str());
+    ::google::SetLogSymlink(google::WARNING, name.c_str());
+    ::google::SetLogSymlink(google::ERROR,  name.c_str());
+    ::google::InstallFailureSignalHandler();
 }
 
 }  // namespace rrpc

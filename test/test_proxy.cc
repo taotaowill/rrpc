@@ -28,7 +28,6 @@ void onConnection(const TcpConnectionPtr &conn) {
     RpcConnectionMeta meta;
     meta.conn_id = -1;
     meta.crc = 1;
-
     size_t size = sizeof(meta);
     char* data = new char[size];
     memset(data, 0, size);

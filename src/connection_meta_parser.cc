@@ -1,7 +1,6 @@
-#include "connection_meta_parser.h"
-
 #include "glog/logging.h"
 
+#include "connection_meta_parser.h"
 #include "message_header.h"
 
 namespace rrpc {

@@ -69,7 +69,7 @@
 namespace rrpc {
 
 /// base class for all Closures
-class ClosureBase : public google::protobuf::Closure
+class ClosureBase : public ::google::protobuf::Closure
 {
 public:
     virtual ~ClosureBase() {}

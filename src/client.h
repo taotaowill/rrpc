@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 
 #include "boost/function.hpp"
@@ -30,16 +31,19 @@ public:
     template <class T>
     bool GetStub(T** stub, int32_t rpc_id) {
         MutexLock lock(&mutex_);
-        RpcChannel* channel = new RpcChannel(
-                proxy_ip_, proxy_port_, rpc_id_, rpc_id, this);
-        *stub = new T(channel);
+        if (channels_.find(rpc_id) == channels_.end()) {
+            RpcChannel* channel = new RpcChannel(
+                    proxy_ip_, proxy_port_, rpc_id_, rpc_id, this);
+            channels_[rpc_id] = channel;
+        }
+        *stub = new T(channels_[rpc_id]);
         return true;
     }
 
     template <class Stub, class Request, class Response, class Callback>
     bool SendRequest(
             Stub* stub,
-            void(Stub::*func) (google::protobuf::RpcController*,
+            void(Stub::*func) (::google::protobuf::RpcController*,
                                const Request*, Response*, Callback*),
             const Request* request,
             Response* response,
@@ -56,13 +60,13 @@ public:
                 return true;
             }
 
-           //if (retry < retry_times - 1) {
-           //    LOG(INFO) << "Send failed, retry ...";
-           //    usleep(1000000);
-           //} else {
-           //    LOG(WARNING) <<  "SendRequest fail: "
-           //                 << controller.ErrorText().c_str();
-           //}
+           if (retry < retry_times - 1) {
+               LOG(INFO) << "Send failed, retry ...";
+               usleep(100000);
+           } else {
+               LOG(WARNING) <<  "SendRequest fail: "
+                            << controller.ErrorText().c_str();
+           }
 
             controller.Reset();
         }
@@ -75,13 +79,13 @@ public:
     template <class Stub, class Request, class Response, class Callback>
     void AsyncRequest(
             Stub* stub,
-            void(Stub::*func) (google::protobuf::RpcController*,
+            void(Stub::*func) (::google::protobuf::RpcController*,
                                const Request*, Response*, Callback*),
             const Request* request, Response* response,
             boost::function<void (const Request*, Response*, bool, int)> callback,
             int32_t rpc_timeout, int /*retry_times*/) {
         RpcController* controller = new RpcController();
-        google::protobuf::Closure* done = NewClosure(
+        ::google::protobuf::Closure* done = NewClosure(
                 &RpcClient::template RpcCallback<Request, Response, Callback>,
                 controller, request, response, callback);
         (stub->*func)(controller, request, response, done);
@@ -93,7 +97,6 @@ public:
             const Request* request,
             Response* response,
             boost::function<void (const Request*, Response*, bool, int)> callback) {
-        LOG(INFO) << "+++++++++++++++++ done run call";
         bool failed = rpc_controller->Failed();
         if (failed) {
             LOG(WARNING) << "RpcCallback: "
@@ -112,6 +115,7 @@ private:
     std::string proxy_ip_;
     int32_t proxy_port_;
     int32_t rpc_id_;
+    std::map<int32_t, RpcChannel*> channels_;
 };
 
 }  // namespace rrpc

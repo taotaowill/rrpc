@@ -1,5 +1,3 @@
-#include "channel.h"
-
 #include <string>
 
 #include "boost/bind.hpp"
@@ -9,6 +7,7 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpClient.h"
 
+#include "channel.h"
 #include "controller.h"
 
 namespace rrpc {
@@ -28,7 +27,6 @@ RpcChannel::RpcChannel(std::string proxy_ip,
         connected_(false) {
     send_buff_ = malloc(SEND_BUFF_MAX_SIZE);
     loop_pool_.AddTask(boost::bind(&RpcChannel::StartLoop, this));
-    //callback_pool_.AddTask(boost::bind(&RpcChannel::CallbackFunc, this));
 }
 
 RpcChannel::~RpcChannel() {
@@ -36,7 +34,7 @@ RpcChannel::~RpcChannel() {
 }
 
 void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
-                            google::protobuf::RpcController* controller,
+                            ::google::protobuf::RpcController* controller,
                             const ::google::protobuf::Message* request,
                             ::google::protobuf::Message* response,
                             ::google::protobuf::Closure* done) {
@@ -52,67 +50,41 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     message.src_id = rpc_src_id_;
     message.dst_id = rpc_dst_id_;
     uint32_t size;
-    void* send_buff = message.Packaging(send_buff_, size);
-    {
-        MutexLock lock(&mutex_);
-        rpc_conn_->conn->send(send_buff, size);
-    }
-    LOG(INFO) << "rpc_channel send message to proxy";
-    free(send_buff);
-    {
-        MutexLock lock(&mutex_);
-        requests_[sequence_id] = method;
-    }
-
-    // sync request
+    void* send_buff = message.Packaging(size);
     RpcController *rpc_controller = dynamic_cast<RpcController*>(controller);
-    int32_t now_time = baidu::common::timer::now_time();
-    LOG(INFO) << "now_time: " << now_time;
-    int32_t timeout = now_time + rpc_controller->GetTimeout();
-    LOG(INFO) << "timeout: " << timeout;
-
-    while (now_time < timeout) {
-        now_time = baidu::common::timer::now_time();
-        LOG(INFO) << "sync wait: " << now_time;
-        std::map<int32_t, google::protobuf::Message*>::iterator it = \
-                responses_.find(sequence_id);
-        if (it != responses_.end()) {
-            response = it->second;
-            responses_.erase(sequence_id);
-            if (done != NULL) {
-                done->Run();
-            }
-            return;
+        rpc_conn_->conn->send(send_buff, size);
+        LOG(INFO) << "rpc_channel send message to proxy";
+        requests_[sequence_id] = method;
+        //free(send_buff);
+        if (done != NULL) {
+            closures_[sequence_id] = std::make_pair(rpc_controller, done);
         }
 
-        usleep(10000);
+    // sync request
+    if (NULL == done) {
+        while (!dynamic_cast<RpcController*>(controller)->IsTimeout()) {
+            {
+                MutexLock lock(&mutex_);
+                std::map<int32_t, ::google::protobuf::Message*>::iterator it = \
+                        responses_.find(sequence_id);
+                if (it != responses_.end()) {
+                    response->CopyFrom(*(it->second));
+                    responses_.erase(sequence_id);
+                    return;
+                }
+            }
+            usleep(10000);
+        }
+        controller->SetFailed("timeout");
+        return;
+    } else {
+        responses_[sequence_id] = response;
     }
-
-    controller->SetFailed("timeout");
-    return;
-
-    //if (NULL == done) {
-    //    while (now_time < timeout) {
-    //        now_time = baidu::common::timer::now_time();
-    //        LOG(INFO) << "sync wait: " << now_time;
-    //        std::map<int32_t, google::protobuf::Message*>::iterator it = \
-    //                responses_.find(sequence_id);
-    //        if (it != responses_.end()) {
-    //            response = it->second;
-    //            responses_.erase(sequence_id);
-    //            return;
-    //        }
-
-    //        usleep(10000);
-    //    }
-    //    controller->SetFailed("timeout");
-    //    return;
-    //}
 }
 
 void RpcChannel::StartLoop() {
-    EventLoop loop;
-    TcpClient tcp_client(&loop, rpc_proxy_, "pb_client");
+    ::muduo::net::EventLoop loop;
+    ::muduo::net::TcpClient tcp_client(&loop, rpc_proxy_, "pb_client");
     tcp_client.setConnectionCallback(
             boost::bind(&RpcChannel::OnConnection, this, _1));
     tcp_client.setMessageCallback(
@@ -124,13 +96,13 @@ void RpcChannel::StartLoop() {
 void RpcChannel::OnConnection(const TcpConnectionPtr &conn) {
     if (!conn->connected()) {
         LOG(WARNING) << "connection closed by peer";
-        exit(-1);
+        connected_ = false;
+        // TODO retry
         return;
     }
 
-    rpc_conn_->conn = conn;
-
     // send conn meta
+    rpc_conn_->conn = conn;
     RpcConnectionMeta meta;
     meta.conn_id = rpc_src_id_;
     meta.crc = 1;
@@ -142,11 +114,11 @@ void RpcChannel::OnConnection(const TcpConnectionPtr &conn) {
     LOG(INFO) << "RpcClient conn meta sended to proxy";
 }
 
-void RpcChannel::OnMessage(const TcpConnectionPtr &conn,
-                           Buffer *buf,
-                           Timestamp time) {
+void RpcChannel::OnMessage(const ::muduo::net::TcpConnectionPtr &conn,
+                           ::muduo::net::Buffer *buf,
+                           ::muduo::Timestamp time) {
     MutexLock lock(&mutex_);
-    muduo::string data = buf->retrieveAllAsString();
+    ::muduo::string data = buf->retrieveAllAsString();
     rpc_conn_->buff += data;
     parse_pool_.AddTask(boost::bind(&RpcChannel::ParseMessage, this));
 }
@@ -159,24 +131,25 @@ void RpcChannel::ParseMessage() {
         int ret = rpc_conn_->meta_parser->Parse();
         LOG(INFO) << "meta_parser: " << ret;
         switch (ret) {
-            case -1:
-                break;
-            case 1:
-                connected_ = true;
-                rpc_conn_->checked = true;
-                LOG(INFO) << "conn meta parsed ok";
+        case -1:
+            break;
+        case 1:
+            connected_ = true;
+            rpc_conn_->checked = true;
+            LOG(INFO) << "conn meta parsed ok";
 
-                // reset data
-                rpc_conn_->buff.clear();
-                break;
-            default:
-                break;
+            // reset data
+            rpc_conn_->buff.clear();
+            break;
+        default:
+            break;
         }
+
         return;
     }
 
     // deal with rpc message
-    LOG(INFO) << "parse message";
+    LOG(INFO) << "parse with rpc message";
     int ret = rpc_conn_->message_parser->Parse();
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn_->message_parser->GetMessage();
@@ -188,16 +161,16 @@ void RpcChannel::ParseMessage() {
 void RpcChannel::ProcessMessage(RpcMessagePtr message) {
     MutexLock lock(&mutex_);
     int32_t sequence_id = message->meta.sequence_id();
-    std::map<int32_t, const google::protobuf::MethodDescriptor*>::iterator it = \
+    std::map<int32_t, const ::google::protobuf::MethodDescriptor*>::iterator it = \
             requests_.find(sequence_id);
     if (it == requests_.end()) {
         return;
     }
 
-    google::protobuf::Message* response = NULL;
-    const google::protobuf::MethodDescriptor* method = it->second;
-    const google::protobuf::Message* prototype =
-        google::protobuf::MessageFactory::generated_factory()->GetPrototype(
+    ::google::protobuf::Message* response = NULL;
+    const ::google::protobuf::MethodDescriptor* method = it->second;
+    const ::google::protobuf::Message* prototype =
+        ::google::protobuf::MessageFactory::generated_factory()->GetPrototype(
                 method->output_type());
     if (prototype) {
         response = prototype->New();
@@ -205,10 +178,28 @@ void RpcChannel::ProcessMessage(RpcMessagePtr message) {
 
     std::string data(message->data.c_str(), message->data.size());
     response->ParseFromString(data);
-    LOG(INFO) << "response debug_string: " << response->DebugString();
+    //LOG(INFO) << "response debug_string: " << response->DebugString();
     // remove from requests_
     requests_.erase(sequence_id);
-    responses_[sequence_id] = response;
+    if (closures_.find(sequence_id) == closures_.end()) {
+        responses_[sequence_id] = response;
+    } else {
+        responses_[sequence_id]->CopyFrom(*response);
+        callback_pool_.AddTask(
+                boost::bind(&RpcChannel::ProcessCallback, this, sequence_id));
+    }
+}
+
+void RpcChannel::ProcessCallback(
+        int32_t sequence_id) {
+    LOG(INFO) << "++++ ProcessCallback, id: " << sequence_id;
+    ::google::protobuf::Closure* done = closures_[sequence_id].second;
+    RpcController* controller = closures_[sequence_id].first;
+    if (controller->IsTimeout()) {
+        controller->SetFailed("timeout");
+    }
+
+    done->Run();
 }
 
 }  // namespace rrpc

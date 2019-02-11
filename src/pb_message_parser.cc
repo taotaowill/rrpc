@@ -1,8 +1,7 @@
-#include "pb_message_parser.h"
-
 #include "glog/logging.h"
 
 #include "message_header.h"
+#include "pb_message_parser.h"
 
 namespace rrpc {
 

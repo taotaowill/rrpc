@@ -1,8 +1,7 @@
-#include "pb_server.h"
-
 #include "boost/bind.hpp"
 
 #include "message.h"
+#include "pb_server.h"
 
 namespace rrpc {
 
@@ -96,13 +95,13 @@ void RpcPbServer::ProcessMessage(RpcMessagePtr message) {
     std::string method_name = message->meta.method();
     ServiceContext* service = RetrieveService(method_name);
     if (service != NULL) {
-        const MethodDescriptor* method = service->GetMethod(method_name);
+        const ::google::protobuf::MethodDescriptor* method = service->GetMethod(method_name);
         if (method != NULL) {
-            google::protobuf::Message* request = \
+            ::google::protobuf::Message* request = \
                     service->GetService()->GetRequestPrototype(method).New();
             std::string data(message->data.c_str(), message->data.size());
             request->ParseFromString(data);
-            google::protobuf::Message* response = \
+            ::google::protobuf::Message* response = \
                     service->GetService()->GetResponsePrototype(method).New();
             service->GetService()->CallMethod(
                     method, NULL, request, response, NULL);

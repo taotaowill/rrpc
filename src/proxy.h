@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <string>
 
 #include "boost/smart_ptr.hpp"
 #include "common/mutex.h"

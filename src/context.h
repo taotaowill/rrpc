@@ -5,17 +5,13 @@
 
 namespace rrpc {
 
-using google::protobuf::MethodDescriptor;
-using google::protobuf::ServiceDescriptor;
-using google::protobuf::Service;
-
 class ServiceContext {
 public:
-    ServiceContext(google::protobuf::Service* service) {
+    ServiceContext(::google::protobuf::Service* service) {
         service_ = service;
         // get methods
         for (int i = 0; i < service_->GetDescriptor()->method_count(); ++i) {
-            const MethodDescriptor* method = \
+            const ::google::protobuf::MethodDescriptor* method = \
                     service_->GetDescriptor()->method(i);
             LOG(INFO) << "method: " << method->full_name();
             methods_[method->full_name()] = method;
@@ -34,8 +30,8 @@ public:
         return methods_.size();
     }
 
-    const MethodDescriptor* GetMethod(std::string& method_name) {
-        std::map<std::string, const MethodDescriptor*>::iterator it = \
+    const ::google::protobuf::MethodDescriptor* GetMethod(std::string& method_name) {
+        std::map<std::string, const ::google::protobuf::MethodDescriptor*>::iterator it = \
                 methods_.find(method_name);
         if (it == methods_.end()) {
             return NULL;
@@ -44,13 +40,13 @@ public:
         return it->second;
     }
 
-    Service* GetService() {
+    ::google::protobuf::Service* GetService() {
         return service_;
     }
 
 private:
-    Service* service_;
-    std::map<std::string, const MethodDescriptor*> methods_;
+    ::google::protobuf::Service* service_;
+    std::map<std::string, const ::google::protobuf::MethodDescriptor*> methods_;
 };
 
 }  // namespace rrpc

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <pthread.h>
 #include <string>
 
 #include "common/mutex.h"
@@ -10,6 +11,7 @@
 #include "muduo/net/InetAddress.h"
 #include "muduo/net/TcpConnection.h"
 
+#include "controller.h"
 #include "connection.h"
 
 const int32_t SEND_BUFF_MAX_SIZE = 10 * 1024 * 1024; // 10M
@@ -19,12 +21,10 @@ namespace rrpc {
 using baidu::common::Mutex;
 using baidu::common::MutexLock;
 using baidu::common::ThreadPool;
-using namespace muduo;
-using namespace muduo::net;
 
 class RpcClient;
 
-class RpcChannel : public google::protobuf::RpcChannel {
+class RpcChannel : public ::google::protobuf::RpcChannel {
 public:
     RpcChannel(std::string proxy_ip,
                int32_t proxy_port,
@@ -41,17 +41,17 @@ public:
 
 private:
     void StartLoop();
-    void OnConnection(const TcpConnectionPtr &conn);
-    void OnMessage(const TcpConnectionPtr &conn,
-                   Buffer *buf,
-                   Timestamp time);
+    void OnConnection(const ::muduo::net::TcpConnectionPtr &conn);
+    void OnMessage(const ::muduo::net::TcpConnectionPtr &conn,
+                   ::muduo::net::Buffer *buf,
+                   ::muduo::Timestamp time);
     void ParseMessage();
     void ProcessMessage(RpcMessagePtr message);
     int32_t GetSequenceId() {
         MutexLock lock(&mutex_);
         return sequence_id_++;
     }
-    void CallbackFunc();
+    void ProcessCallback(int32_t sequence_id);
 
 private:
     Mutex mutex_;
@@ -65,12 +65,13 @@ private:
     ThreadPool parse_pool_;
     ThreadPool process_pool_;
     ThreadPool callback_pool_;
-    InetAddress rpc_proxy_;
+    ::muduo::net::InetAddress rpc_proxy_;
     RpcClient* rpc_client_;
     RpcConnectionPtr rpc_conn_;
     bool connected_;
-    std::map<int32_t, const::google::protobuf::MethodDescriptor*> requests_;
-    std::map<int32_t, google::protobuf::Message*> responses_;
+    std::map<int32_t, const ::google::protobuf::MethodDescriptor*> requests_;
+    std::map<int32_t, ::google::protobuf::Message*> responses_;
+    std::map<int32_t, std::pair<RpcController*, ::google::protobuf::Closure*> > closures_;
 };
 
 }  // namespace rrpc

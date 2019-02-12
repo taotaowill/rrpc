@@ -44,7 +44,6 @@ int RpcPbMessageParser::Parse() {
                 return 0;
             }
 
-            LOG(INFO) << "parse meta";
             if(!message_.meta.ParseFromArray(buff_->c_str(), header_.meta_size)) {
                 LOG(WARNING) << "invalid rpc meta";
                 buff_->clear();

@@ -113,8 +113,11 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     LOG(INFO) << "message parse ret: " << ret;
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn->message_parser->GetMessage();
-        process_pool_.AddTask(
-            boost::bind(&RpcProxy::ProcessMessage, this, message));
+        while (message) {
+            process_pool_.AddTask(
+                boost::bind(&RpcProxy::ProcessMessage, this, message));
+            message = rpc_conn->message_parser->GetMessage();
+        }
     }
 }
 

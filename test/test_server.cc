@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "gtest/gtest.h"
 
@@ -23,12 +24,13 @@ void EchoServiceImpl::Echo(
         ::google::protobuf::Closure* done) {
     if (request->has_message()) {
         LOG(INFO) << "request message: " << request->message();
-        response->set_message("response message by EchoServiceImpl");
+        response->set_message(request->message());
     }
 }
 
 TEST(Server, main) {
-    std::string proxy_ip = "127.0.0.1";
+    //std::string proxy_ip = "127.0.0.1";
+    std::string proxy_ip = getenv("RRPC_PROXY");
     int32_t proxy_port = 8988;
     int32_t rpc_server_id = 100045;
     rrpc::RpcServer* rpc_server = \

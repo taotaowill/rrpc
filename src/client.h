@@ -37,7 +37,21 @@ public:
             channels_[rpc_id] = channel;
         }
         *stub = new T(channels_[rpc_id]);
-        return true;
+        long timeout = ::baidu::common::timer::get_micros() + 2 * 1000000L;
+        while (true) {
+            long nowtime = ::baidu::common::timer::get_micros();
+            if (channels_[rpc_id]->IsConnected()) {
+                return true;
+            }
+
+            if (nowtime > timeout) {
+                return false;
+            }
+
+            usleep(10000);
+        }
+
+        return false;
     }
 
     template <class Stub, class Request, class Response, class Callback>
@@ -49,6 +63,7 @@ public:
             Response* response,
             int32_t rpc_timeout,
             int retry_times) {
+        MutexLock lock(&mutex_);
         RpcController controller;
         controller.SetTimeout(rpc_timeout);
         for (int32_t retry = 0; retry < retry_times; ++retry) {
@@ -63,14 +78,10 @@ public:
            if (retry < retry_times - 1) {
                LOG(INFO) << "Send failed, retry ...";
                usleep(100000);
-           } else {
-               LOG(WARNING) <<  "SendRequest fail: "
-                            << controller.ErrorText().c_str();
            }
-
-            controller.Reset();
         }
 
+        controller.Reset();
         LOG(WARNING) << "SendRequest failed: " << controller.ErrorText();
         return false;
     }
@@ -81,14 +92,19 @@ public:
             Stub* stub,
             void(Stub::*func) (::google::protobuf::RpcController*,
                                const Request*, Response*, Callback*),
-            const Request* request, Response* response,
+            const Request* request,
+            Response* response,
             boost::function<void (const Request*, Response*, bool, int)> callback,
-            int32_t rpc_timeout, int /*retry_times*/) {
+            int32_t rpc_timeout,
+            int /*retry_times*/) {
+        MutexLock lock(&mutex_);
         RpcController* controller = new RpcController();
+        controller->SetTimeout(rpc_timeout);
         ::google::protobuf::Closure* done = NewClosure(
                 &RpcClient::template RpcCallback<Request, Response, Callback>,
                 controller, request, response, callback);
         (stub->*func)(controller, request, response, done);
+        LOG(INFO) << "+++ async requst end";
     }
 
     template <class Request, class Response, class Callback>

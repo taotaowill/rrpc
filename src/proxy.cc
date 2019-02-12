@@ -21,6 +21,7 @@ void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
         LOG(INFO) << "on connection, " << conn->name();
         RpcConnectionPtr rpc_conn(new RpcConnection());
         rpc_conn->conn_name = conn_name;
+        conn->setTcpNoDelay(true);
         rpc_conn->conn = conn;
         conn_manager_->Insert(rpc_conn);
     } else {
@@ -33,8 +34,7 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
                          Buffer *buf,
                          Timestamp time) {
     std::string conn_name(conn->name().c_str());
-    LOG(INFO) << "on message, conn_name: " << conn_name
-              << ", time: " << time.toString();
+    LOG(INFO) << "on message, conn_name: " << conn_name;
     RpcConnectionPtr rpc_conn = conn_manager_->Get(conn_name);
     if (!rpc_conn) {
         LOG(INFO) << "rpc_conn not found";
@@ -44,6 +44,7 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
     // append data
     MutexLock lock(&mutex_);
     muduo::string data = buf->retrieveAllAsString();
+    LOG(INFO) << "++++++++++++++++++ buf_size: " << data.size();
     rpc_conn->buff += data;
     parse_pool_.AddTask(boost::bind(&RpcProxy::ParseMessage, this, rpc_conn));
 }

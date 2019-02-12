@@ -20,11 +20,11 @@ RpcChannel::RpcChannel(std::string proxy_ip,
         sequence_id_(0),
         rpc_src_id_(rpc_src_id),
         rpc_dst_id_(rpc_dst_id),
+        loop_pool_(1),
         callback_pool_(1),
         rpc_proxy_(proxy_ip, proxy_port),
         rpc_client_(rpc_client),
-        rpc_conn_(new RpcConnection()),
-        connected_(false) {
+        rpc_conn_(new RpcConnection()) {
     send_buff_ = malloc(SEND_BUFF_MAX_SIZE);
     loop_pool_.AddTask(boost::bind(&RpcChannel::StartLoop, this));
 }
@@ -52,13 +52,11 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     uint32_t size;
     void* send_buff = message.Packaging(size);
     RpcController *rpc_controller = dynamic_cast<RpcController*>(controller);
-        rpc_conn_->conn->send(send_buff, size);
-        LOG(INFO) << "rpc_channel send message to proxy";
-        requests_[sequence_id] = method;
-        //free(send_buff);
-        if (done != NULL) {
-            closures_[sequence_id] = std::make_pair(rpc_controller, done);
-        }
+    rpc_conn_->conn->send(send_buff, size);
+    LOG(INFO) << "rpc_channel send message to proxy, size: "
+              << size
+              << ", sequence_id: " << sequence_id;
+    requests_[sequence_id] = method;
 
     // sync request
     if (NULL == done) {
@@ -78,6 +76,7 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         controller->SetFailed("timeout");
         return;
     } else {
+        closures_[sequence_id] = std::make_pair(rpc_controller, done);
         responses_[sequence_id] = response;
     }
 }
@@ -94,14 +93,15 @@ void RpcChannel::StartLoop() {
 }
 
 void RpcChannel::OnConnection(const TcpConnectionPtr &conn) {
+    MutexLock lock(&mutex_);
     if (!conn->connected()) {
         LOG(WARNING) << "connection closed by peer";
-        connected_ = false;
         // TODO retry
         return;
     }
 
     // send conn meta
+    conn->setTcpNoDelay(true);
     rpc_conn_->conn = conn;
     RpcConnectionMeta meta;
     meta.conn_id = rpc_src_id_;
@@ -124,7 +124,6 @@ void RpcChannel::OnMessage(const ::muduo::net::TcpConnectionPtr &conn,
 }
 
 void RpcChannel::ParseMessage() {
-    MutexLock lock(&mutex_);
     LOG(INFO) << "parse message";
     // deal with meta message
     if (!rpc_conn_->checked) {
@@ -134,7 +133,6 @@ void RpcChannel::ParseMessage() {
         case -1:
             break;
         case 1:
-            connected_ = true;
             rpc_conn_->checked = true;
             LOG(INFO) << "conn meta parsed ok";
 
@@ -153,8 +151,11 @@ void RpcChannel::ParseMessage() {
     int ret = rpc_conn_->message_parser->Parse();
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn_->message_parser->GetMessage();
-        process_pool_.AddTask(
-            boost::bind(&RpcChannel::ProcessMessage, this, message));
+        while (message) {
+            process_pool_.AddTask(
+                boost::bind(&RpcChannel::ProcessMessage, this, message));
+            message = rpc_conn_->message_parser->GetMessage();
+        }
     }
 }
 
@@ -178,7 +179,6 @@ void RpcChannel::ProcessMessage(RpcMessagePtr message) {
 
     std::string data(message->data.c_str(), message->data.size());
     response->ParseFromString(data);
-    //LOG(INFO) << "response debug_string: " << response->DebugString();
     // remove from requests_
     requests_.erase(sequence_id);
     if (closures_.find(sequence_id) == closures_.end()) {

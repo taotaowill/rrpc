@@ -21,6 +21,7 @@ int RpcPbMessageParser::Parse() {
                 return 0;
             }
 
+            memset(&header_, 0, RPC_MESSAGE_HEADER_SIZE);
             memcpy(&header_, buff_->c_str(), RPC_MESSAGE_HEADER_SIZE);
             if (!header_.Check()) {
                 LOG(WARNING) << "invalid rpc message header";

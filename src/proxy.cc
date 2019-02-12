@@ -18,13 +18,13 @@ RpcProxy::RpcProxy(std::string ip, int port) :
 void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
     std::string conn_name(conn->name().c_str());
     if (conn->connected()) {
-        LOG(INFO) << "New Connection, " << conn->name();
+        LOG(INFO) << "on connection, " << conn->name();
         RpcConnectionPtr rpc_conn(new RpcConnection());
         rpc_conn->conn_name = conn_name;
         rpc_conn->conn = conn;
         conn_manager_->Insert(rpc_conn);
     } else {
-        LOG(INFO) << "Del Connection, " << conn->name();
+        LOG(INFO) << "!!!on lost connection, " << conn->name();
         conn_manager_->Remove(conn_name);
     }
 }
@@ -77,24 +77,26 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     RpcConnectionMetaPtr meta;
     if (!rpc_conn->checked) {
         int ret = rpc_conn->meta_parser->Parse();
-        LOG(INFO) << "meta_parser: " << ret;
+        // LOG(INFO) << "meta_parser: " << ret;
         switch (ret) {
         case -1:
             conn_manager_->Remove(rpc_conn->conn_name);
             break;
         case 1:
             meta = rpc_conn->meta_parser->GetMeta();
+            LOG(INFO) << "conn meta parsed ok"
+                      << ", conn_id: " << meta->conn_id;
             // echo back to client
             if (meta->conn_id < 0) {
-                LOG(INFO) << "echo rpc conn meta back";
+                LOG(INFO) << "### client connection, and echo meta back";
                 rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
+            } else {
+                LOG(INFO) << "### server connection";
             }
 
             // modify rpc_conn
             rpc_conn->conn_id = meta->conn_id;
             rpc_conn->checked = true;
-            LOG(INFO) << "conn meta parsed ok"
-                      << ", conn_id: " << rpc_conn->conn_id;
 
             // reset data
             rpc_conn->buff.clear();
@@ -106,8 +108,9 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     }
 
     // deal with rpc message
-    LOG(INFO) << "parse message";
+    // LOG(INFO) << "parse message";
     int ret = rpc_conn->message_parser->Parse();
+    LOG(INFO) << "message parse ret: " << ret;
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn->message_parser->GetMessage();
         process_pool_.AddTask(

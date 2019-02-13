@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "glog/logging.h"
 #include "common/timer.h"
 #include "google/protobuf/service.h"
 
@@ -9,7 +10,7 @@ namespace rrpc {
 
 class RpcController : public ::google::protobuf::RpcController {
 public:
-    RpcController() {}
+    RpcController() : is_failed_(false) {}
     ~RpcController() {}
 
     virtual void Reset() {}
@@ -26,7 +27,10 @@ public:
         return;
     }
 
-    void SetFailed(const std::string &reason) {}
+    void SetFailed(const std::string &reason) {
+        is_failed_ = true;
+        reason_ = reason;
+    }
 
     bool IsCanceled() const {
         return false;
@@ -41,7 +45,10 @@ public:
     }
 
     bool IsTimeout() {
-        return ::baidu::common::timer::get_micros() < timeout_;
+        LOG(INFO) << "timeout: " << timeout_
+                  << ", nowtime: " << ::baidu::common::timer::get_micros();
+        long now_time = ::baidu::common::timer::get_micros();
+        return timeout_ < now_time;
     }
 
 private:

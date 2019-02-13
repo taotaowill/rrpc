@@ -44,6 +44,7 @@ void RpcPbServer::OnConnection(const TcpConnectionPtr &conn) {
     }
 
     rpc_conn_->conn_name = conn_name;
+    conn->setTcpNoDelay(true);
     rpc_conn_->conn = conn;
     rpc_conn_->buff = "";
     RpcConnectionMeta meta;
@@ -83,8 +84,11 @@ void RpcPbServer::ParseMessage() {
     LOG(INFO) << "message_parser->Parse(): " << ret;
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn_->message_parser->GetMessage();
-        process_pool_.AddTask(
-              boost::bind(&RpcPbServer::ProcessMessage, this, message));
+        while (message) {
+            process_pool_.AddTask(
+                  boost::bind(&RpcPbServer::ProcessMessage, this, message));
+            message = rpc_conn_->message_parser->GetMessage();
+        }
     }
 }
 

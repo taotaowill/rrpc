@@ -37,7 +37,7 @@ public:
                     const ::google::protobuf::Message* request,
                     ::google::protobuf::Message* response,
                     ::google::protobuf::Closure* done);
-    bool IsConnected() { return connected_; }
+    bool IsConnected() { return rpc_conn_->checked; }
 
 private:
     void StartLoop();
@@ -48,7 +48,6 @@ private:
     void ParseMessage();
     void ProcessMessage(RpcMessagePtr message);
     int32_t GetSequenceId() {
-        MutexLock lock(&mutex_);
         return sequence_id_++;
     }
     void ProcessCallback(int32_t sequence_id);
@@ -68,7 +67,6 @@ private:
     ::muduo::net::InetAddress rpc_proxy_;
     RpcClient* rpc_client_;
     RpcConnectionPtr rpc_conn_;
-    bool connected_;
     std::map<int32_t, const ::google::protobuf::MethodDescriptor*> requests_;
     std::map<int32_t, ::google::protobuf::Message*> responses_;
     std::map<int32_t, std::pair<RpcController*, ::google::protobuf::Closure*> > closures_;

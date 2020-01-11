@@ -78,7 +78,7 @@ public:
         if (timeout_ == -1) return;
         long end = get_micros();
         if (end - start_ > timeout_ * 1000) {
-            double t = (end - start_) / 1000.0;
+            double t = static_cast<double>(end - start_) / 1000.0;
             if (!msg2_) {
                 fprintf(stderr, "[AutoTimer] %s use %.3f ms\n",
                     msg1_, t);

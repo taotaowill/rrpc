@@ -4,7 +4,8 @@
 #include "gtest/gtest.h"
 
 #include "rrpc.h"
-#include "echo.pb.h"
+
+#include "test/echo.pb.h"
 
 using namespace rrpc;
 using namespace rrpc::test;
@@ -44,7 +45,7 @@ TEST(Server, main) {
     }
 }
 
-int main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+//int main(int argc, char* argv[]) {
+//    ::testing::InitGoogleTest(&argc, argv);
+//    return RUN_ALL_TESTS();
+//}

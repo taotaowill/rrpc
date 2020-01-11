@@ -9,9 +9,10 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpConnection.h"
 
-#include "echo.pb.h"
 #include "rrpc.h"
 #include "timer.h"
+
+#include "test/echo.pb.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -80,7 +81,7 @@ TEST(Proxy, main) {
     loop.loop();
 }
 
-int main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+//int main(int argc, char* argv[]) {
+//    ::testing::InitGoogleTest(&argc, argv);
+//    return RUN_ALL_TESTS();
+//}

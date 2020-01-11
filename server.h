@@ -33,7 +33,7 @@ public:
     ServiceContext* RetrieveService(std::string& method_name) {
         MutexLock lock(&mutex_);
         std::vector<std::string> name_parts;
-        int i = method_name.rfind('.');
+        int i = static_cast<int>(method_name.rfind('.'));
         std::string service_name = method_name.substr(0, i);
         if ( i <= 0) {
             return NULL;

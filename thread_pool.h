@@ -214,7 +214,7 @@ private:
                     }
                     continue;
                 } else if (queue_.empty() && !stop_) {
-                    work_cv_.TimeWait(wait_time, "ThreadProcTimeWait");
+                    work_cv_.TimeWait(static_cast<int>(wait_time), "ThreadProcTimeWait");
                     continue;
                 }
             }

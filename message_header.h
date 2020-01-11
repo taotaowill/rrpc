@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 
-#define RPC_MESSAGE_HEADER_MAGIC 1129337426u  // RRPC
-#define RPC_MESSAGE_HEADER_SIZE 28
+const  unsigned long RPC_MESSAGE_HEADER_MAGIC = 1129337426u;
+const unsigned int RPC_MESSAGE_HEADER_SIZE = 28;
 
 namespace rrpc {
 

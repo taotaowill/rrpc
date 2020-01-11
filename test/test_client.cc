@@ -5,9 +5,10 @@
 #include "boost/bind.hpp"
 #include "gtest/gtest.h"
 
-#include "echo.pb.h"
 #include "rrpc.h"
 #include "timer.h"
+
+#include "test/echo.pb.h"
 
 static int count = 0;
 
@@ -87,7 +88,7 @@ TEST(Client, CallMethod) {
     usleep(5000000);
 }
 
-int main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+//int main(int argc, char* argv[]) {
+//    ::testing::InitGoogleTest(&argc, argv);
+//    return RUN_ALL_TESTS();
+//}

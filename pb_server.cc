@@ -19,9 +19,9 @@ void RpcPbServer::StartLoop() {
     EventLoop loop;
     TcpClient client(&loop, rpc_proxy_, "pb_server");
     client.setConnectionCallback(
-          boost::bind(&RpcPbServer::OnConnection, this, _1));
+          boost::bind(&RpcPbServer::OnConnection, this, ::_1));
     client.setMessageCallback(
-          boost::bind(&RpcPbServer::OnMessage, this, _1, _2, _3));
+          boost::bind(&RpcPbServer::OnMessage, this, ::_1, ::_2, ::_3));
     client.connect();
     loop.loop();
 }
@@ -29,6 +29,7 @@ void RpcPbServer::StartLoop() {
 bool RpcPbServer::Start() {
     loop_pool_.AddTask(boost::bind(&RpcPbServer::StartLoop, this));
 //    LOG(INFO) << "Start() end";
+    return true;
 }
 
 void RpcPbServer::Stop() {

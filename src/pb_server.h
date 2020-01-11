@@ -2,8 +2,6 @@
 
 #include "server.h"
 
-#include "common/mutex.h"
-#include "common/thread_pool.h"
 #include "muduo/base/Timestamp.h"
 #include "muduo/net/Buffer.h"
 #include "muduo/net/TcpClient.h"
@@ -12,6 +10,8 @@
 
 #include "connection.h"
 #include "connection_manager.h"
+#include "mutex.h"
+#include "thread_pool.h"
 
 namespace rrpc {
 

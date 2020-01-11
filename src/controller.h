@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "glog/logging.h"
-#include "common/timer.h"
 #include "google/protobuf/service.h"
+
+#include "timer.h"
 
 namespace rrpc {
 
@@ -45,8 +45,8 @@ public:
     }
 
     bool IsTimeout() {
-        LOG(INFO) << "timeout: " << timeout_
-                  << ", nowtime: " << ::baidu::common::timer::get_micros();
+//        LOG(INFO) << "timeout: " << timeout_
+//                  << ", nowtime: " << ::baidu::common::timer::get_micros();
         long now_time = ::baidu::common::timer::get_micros();
         return timeout_ < now_time;
     }

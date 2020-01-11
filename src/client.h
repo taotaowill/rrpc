@@ -4,14 +4,12 @@
 #include <string>
 
 #include "boost/function.hpp"
-#include "common/mutex.h"
-#include "common/thread_pool.h"
-#include "glog/logging.h"
-
 
 #include "channel.h"
 #include "closure.h"
 #include "controller.h"
+#include "mutex.h"
+#include "thread_pool.h"
 
 namespace rrpc {
 
@@ -68,21 +66,21 @@ public:
         controller.SetTimeout(rpc_timeout);
         for (int32_t retry = 0; retry < retry_times; ++retry) {
             (stub->*func)(&controller, request, response, NULL);
-            LOG(INFO) << "SendRequest after call";
+//            LOG(INFO) << "SendRequest after call";
             if (!controller.Failed()) {
-                LOG(INFO) << "SendRequest success, response: "
-                          << response->DebugString();
+//                LOG(INFO) << "SendRequest success, response: "
+//                          << response->DebugString();
                 return true;
             }
 
            if (retry < retry_times - 1) {
-               LOG(INFO) << "Send failed, retry ...";
+//               LOG(INFO) << "Send failed, retry ...";
                usleep(100000);
            }
         }
 
         controller.Reset();
-        LOG(WARNING) << "SendRequest failed: " << controller.ErrorText();
+//        LOG(WARNING) << "SendRequest failed: " << controller.ErrorText();
         return false;
     }
 
@@ -104,7 +102,7 @@ public:
                 &RpcClient::template RpcCallback<Request, Response, Callback>,
                 controller, request, response, callback);
         (stub->*func)(controller, request, response, done);
-        LOG(INFO) << "+++ async requst end";
+//        LOG(INFO) << "+++ async requst end";
     }
 
     template <class Request, class Response, class Callback>
@@ -115,8 +113,8 @@ public:
             boost::function<void (const Request*, Response*, bool, int)> callback) {
         bool failed = rpc_controller->Failed();
         if (failed) {
-            LOG(WARNING) << "RpcCallback: "
-                         << rpc_controller->ErrorText().c_str();
+//            LOG(WARNING) << "RpcCallback: "
+//                         << rpc_controller->ErrorText().c_str();
         }
 
         delete rpc_controller;

@@ -1,5 +1,3 @@
-#include "glog/logging.h"
-
 #include "message_header.h"
 #include "pb_message_parser.h"
 
@@ -16,7 +14,7 @@ int RpcPbMessageParser::Parse() {
     int ret = 0;
     while (buff_->size() > 0) {
         if (stage_ == PARSING_HEADER) {
-            LOG(INFO) << "buff_size: " << buff_->size();
+//            LOG(INFO) << "buff_size: " << buff_->size();
             if (buff_->size() < RPC_MESSAGE_HEADER_SIZE) {
                 return 0;
             }
@@ -24,7 +22,7 @@ int RpcPbMessageParser::Parse() {
             memset(&header_, 0, RPC_MESSAGE_HEADER_SIZE);
             memcpy(&header_, buff_->c_str(), RPC_MESSAGE_HEADER_SIZE);
             if (!header_.Check()) {
-                LOG(WARNING) << "invalid rpc message header";
+//                LOG(WARNING) << "invalid rpc message header";
                 buff_->clear();
                 return -1;
             } else {
@@ -32,11 +30,11 @@ int RpcPbMessageParser::Parse() {
                 stage_ = PARSING_BODY;
                 message_.src_id = header_.src_id;
                 message_.dst_id = header_.dst_id;
-                LOG(INFO) << "header parse ok"
-                    << ", src_id: " << header_.src_id
-                    << ", dst_id: " << header_.dst_id
-                    << ", meta_size: " << header_.meta_size
-                    << ", data_size: " << header_.data_size;
+//                LOG(INFO) << "header parse ok"
+//                    << ", src_id: " << header_.src_id
+//                    << ", dst_id: " << header_.dst_id
+//                    << ", meta_size: " << header_.meta_size
+//                    << ", data_size: " << header_.data_size;
             }
         }
 
@@ -46,15 +44,15 @@ int RpcPbMessageParser::Parse() {
             }
 
             if(!message_.meta.ParseFromArray(buff_->c_str(), header_.meta_size)) {
-                LOG(WARNING) << "invalid rpc meta";
+//                LOG(WARNING) << "invalid rpc meta";
                 buff_->clear();
                 stage_ = PARSING_HEADER;
                 return -1;
             }
 
-            LOG(INFO) << "meta parse ok"
-                << ", sequence_id: " << message_.meta.sequence_id()
-                << ", method: " << message_.meta.method();
+//            LOG(INFO) << "meta parse ok"
+//                << ", sequence_id: " << message_.meta.sequence_id()
+//                << ", method: " << message_.meta.method();
             message_.data = buff_->substr(header_.meta_size, header_.data_size);
             *buff_ = buff_->substr(header_.meta_size + header_.data_size);
             message_list_.push_back(message_);

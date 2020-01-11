@@ -23,7 +23,7 @@ void EchoServiceImpl::Echo(
         EchoResponse* response,
         ::google::protobuf::Closure* done) {
     if (request->has_message()) {
-        LOG(INFO) << "request message: " << request->message();
+//        LOG(INFO) << "request message: " << request->message();
         response->set_message(request->message());
     }
 }
@@ -45,7 +45,6 @@ TEST(Server, main) {
 }
 
 int main(int argc, char* argv[]) {
-    rrpc::SetupLog("test_server");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

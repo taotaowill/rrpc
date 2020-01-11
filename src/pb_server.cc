@@ -12,7 +12,7 @@ RpcPbServer::RpcPbServer(std::string proxy_ip,
         rpc_proxy_(proxy_ip, proxy_port),
         rpc_conn_(new RpcConnection()),
         rpc_id_(rpc_id) {
-    LOG(INFO) << "RpcPbServer rpc_id: " << rpc_id;
+//    LOG(INFO) << "RpcPbServer rpc_id: " << rpc_id;
 }
 
 void RpcPbServer::StartLoop() {
@@ -28,7 +28,7 @@ void RpcPbServer::StartLoop() {
 
 bool RpcPbServer::Start() {
     loop_pool_.AddTask(boost::bind(&RpcPbServer::StartLoop, this));
-    LOG(INFO) << "Start() end";
+//    LOG(INFO) << "Start() end";
 }
 
 void RpcPbServer::Stop() {
@@ -39,7 +39,7 @@ void RpcPbServer::OnConnection(const TcpConnectionPtr &conn) {
     std::string conn_name(conn->name().c_str());
     // lost connection
     if (!conn->connected()) {
-      LOG(ERROR) << "========== lost connection to proxy ============";
+//      LOG(ERROR) << "========== lost connection to proxy ============";
       // TODO reconnect
     }
 
@@ -61,18 +61,18 @@ void RpcPbServer::OnMessage(const TcpConnectionPtr &conn,
                             Buffer *buf,
                             Timestamp time) {
     std::string conn_name(conn->name().c_str());
-    LOG(INFO) << "on message, conn_name: " << conn_name;
+//    LOG(INFO) << "on message, conn_name: " << conn_name;
 
     // append data
     muduo::string data = buf->retrieveAllAsString();
-    LOG(INFO) << "message data_size: " << data.size();
+//    LOG(INFO) << "message data_size: " << data.size();
     {
         MutexLock lock(&mutex_);
         rpc_conn_->buff += data;
     }
     parse_pool_.AddTask(
         boost::bind(&RpcPbServer::ParseMessage, this));;
-    LOG(INFO) << "OnMessage end";
+//    LOG(INFO) << "OnMessage end";
 }
 
 void RpcPbServer::ParseMessage() {
@@ -81,7 +81,7 @@ void RpcPbServer::ParseMessage() {
 
     // deal with rpc message
     int ret = rpc_conn_->message_parser->Parse();
-    LOG(INFO) << "message_parser->Parse(): " << ret;
+//    LOG(INFO) << "message_parser->Parse(): " << ret;
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn_->message_parser->GetMessage();
         while (message) {
@@ -94,8 +94,8 @@ void RpcPbServer::ParseMessage() {
 
 void RpcPbServer::ProcessMessage(RpcMessagePtr message) {
     MutexLock lock(&mutex_);
-    LOG(INFO) << "message_meta: " << message->meta.DebugString();
-    LOG(INFO) << "message_data: " << message->data;
+//    LOG(INFO) << "message_meta: " << message->meta.DebugString();
+//    LOG(INFO) << "message_data: " << message->data;
     std::string method_name = message->meta.method();
     ServiceContext* service = RetrieveService(method_name);
     if (service != NULL) {
@@ -110,7 +110,7 @@ void RpcPbServer::ProcessMessage(RpcMessagePtr message) {
             service->GetService()->CallMethod(
                     method, NULL, request, response, NULL);
 
-            LOG(INFO) << "------ response " << response->DebugString();
+//            LOG(INFO) << "------ response " << response->DebugString();
 
             // send response to proxy
             RpcMessage ret_message;
@@ -123,7 +123,7 @@ void RpcPbServer::ProcessMessage(RpcMessagePtr message) {
             uint32_t size;
             void* send_buff = ret_message.Packaging(size);
             rpc_conn_->conn->send(send_buff, size);
-            LOG(INFO) << "response send to proxy ok";
+//            LOG(INFO) << "response send to proxy ok";
         }
     }
 }

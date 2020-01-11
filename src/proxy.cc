@@ -1,5 +1,4 @@
 #include "boost/bind.hpp"
-#include "glog/logging.h"
 
 #include "connection.h"
 #include "connection_manager.h"
@@ -18,14 +17,14 @@ RpcProxy::RpcProxy(std::string ip, int port) :
 void RpcProxy::OnConnection(const TcpConnectionPtr &conn) {
     std::string conn_name(conn->name().c_str());
     if (conn->connected()) {
-        LOG(INFO) << "on connection, " << conn->name();
+//        LOG(INFO) << "on connection, " << conn->name();
         RpcConnectionPtr rpc_conn(new RpcConnection());
         rpc_conn->conn_name = conn_name;
         conn->setTcpNoDelay(true);
         rpc_conn->conn = conn;
         conn_manager_->Insert(rpc_conn);
     } else {
-        LOG(INFO) << "!!!on lost connection, " << conn->name();
+//        LOG(INFO) << "!!!on lost connection, " << conn->name();
         conn_manager_->Remove(conn_name);
     }
 }
@@ -34,17 +33,16 @@ void RpcProxy::OnMessage(const TcpConnectionPtr &conn,
                          Buffer *buf,
                          Timestamp time) {
     std::string conn_name(conn->name().c_str());
-    LOG(INFO) << "on message, conn_name: " << conn_name;
+//    LOG(INFO) << "on message, conn_name: " << conn_name;
     RpcConnectionPtr rpc_conn = conn_manager_->Get(conn_name);
     if (!rpc_conn) {
-        LOG(INFO) << "rpc_conn not found";
+//        LOG(INFO) << "rpc_conn not found";
         return;
     }
 
     // append data
     MutexLock lock(&mutex_);
     muduo::string data = buf->retrieveAllAsString();
-    LOG(INFO) << "++++++++++++++++++ buf_size: " << data.size();
     rpc_conn->buff += data;
     parse_pool_.AddTask(boost::bind(&RpcProxy::ParseMessage, this, rpc_conn));
 }
@@ -85,14 +83,14 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
             break;
         case 1:
             meta = rpc_conn->meta_parser->GetMeta();
-            LOG(INFO) << "conn meta parsed ok"
-                      << ", conn_id: " << meta->conn_id;
+//            LOG(INFO) << "conn meta parsed ok"
+//                      << ", conn_id: " << meta->conn_id;
             // echo back to client
             if (meta->conn_id < 0) {
-                LOG(INFO) << "### client connection, and echo meta back";
+//                LOG(INFO) << "### client connection, and echo meta back";
                 rpc_conn->conn->send(meta.get(), RPC_CONNECTION_META_SIZE);
             } else {
-                LOG(INFO) << "### server connection";
+//                LOG(INFO) << "### server connection";
             }
 
             // modify rpc_conn
@@ -111,7 +109,7 @@ void RpcProxy::ParseMessage(RpcConnectionPtr rpc_conn) {
     // deal with rpc message
     // LOG(INFO) << "parse message";
     int ret = rpc_conn->message_parser->Parse();
-    LOG(INFO) << "message parse ret: " << ret;
+//    LOG(INFO) << "message parse ret: " << ret;
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn->message_parser->GetMessage();
         while (message) {
@@ -129,10 +127,10 @@ void RpcProxy::ProcessMessage(RpcMessagePtr message) {
         uint32_t size;
         void* send_buff = message->Packaging(size);
         rpc_conn->conn->send(send_buff, size);
-        LOG(INFO) << "send to dst ok, dst_id: " << message->dst_id
-                  << ", data_size: " << size;
+//        LOG(INFO) << "send to dst ok, dst_id: " << message->dst_id
+//                  << ", data_size: " << size;
     } else {
-        LOG(WARNING) << "dst_id is not exit, dst_id: " << message->dst_id;
+//        LOG(WARNING) << "dst_id is not exit, dst_id: " << message->dst_id;
     }
 }
 

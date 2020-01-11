@@ -2,8 +2,6 @@
 
 #include "boost/bind.hpp"
 #include "boost/smart_ptr.hpp"
-#include "common/thread.h"
-#include "common/timer.h"
 #include "gtest/gtest.h"
 #include "muduo/base/Timestamp.h"
 #include "muduo/net/Buffer.h"
@@ -11,8 +9,9 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpConnection.h"
 
-#include "rrpc.h"
 #include "echo.pb.h"
+#include "rrpc.h"
+#include "timer.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -20,7 +19,7 @@ using namespace rrpc;
 
 void onConnection(const TcpConnectionPtr &conn) {
     if (!conn->connected()) {
-        LOG(WARNING) << "connection closed by peer";
+//        LOG(WARNING) << "connection closed by peer";
         exit(-1);
         return;
     }
@@ -33,18 +32,18 @@ void onConnection(const TcpConnectionPtr &conn) {
     memset(data, 0, size);
     memcpy(data, &meta, size);
     conn->send(reinterpret_cast<void*>(data), size);
-    LOG(INFO) << "EchoClient conn meta sended to proxy";
+//    LOG(INFO) << "EchoClient conn meta sended to proxy";
 }
 
 // receive proxy echo back(validation)
 void onMessage(const TcpConnectionPtr &conn,
                Buffer *buf,
                Timestamp time) {
-    int32_t now_time = baidu::common::timer::now_time();
-    LOG(INFO) << "now_time: " << now_time;
+//    int32_t now_time = baidu::common::timer::now_time();
+//    LOG(INFO) << "now_time: " << now_time;
     muduo::string msg(buf->retrieveAllAsString());
-    LOG(INFO) << conn->name() << " echo " << msg.size() << " bytes, "
-              << "data received at " << time.toString();
+//    LOG(INFO) << conn->name() << " echo " << msg.size() << " bytes, "
+//              << "data received at " << time.toString();
     if (msg.size() != RPC_CONNECTION_META_SIZE) {
         return;
     }
@@ -65,9 +64,9 @@ void onMessage(const TcpConnectionPtr &conn,
     message.dst_id = 100045;
     uint32_t size;
     void* send_buff = message.Packaging(size);
-    LOG(INFO) << "message size: " << size;
+//    LOG(INFO) << "message size: " << size;
     conn->send(send_buff, size);
-    LOG(INFO) << "hhhhhh";
+//    LOG(INFO) << "hhhhhh";
     free(send_buff);
 }
 
@@ -82,7 +81,6 @@ TEST(Proxy, main) {
 }
 
 int main(int argc, char* argv[]) {
-    rrpc::SetupLog("test_rpc_proxy");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

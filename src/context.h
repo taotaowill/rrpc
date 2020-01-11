@@ -13,7 +13,7 @@ public:
         for (int i = 0; i < service_->GetDescriptor()->method_count(); ++i) {
             const ::google::protobuf::MethodDescriptor* method = \
                     service_->GetDescriptor()->method(i);
-            LOG(INFO) << "method: " << method->full_name();
+//            LOG(INFO) << "method: " << method->full_name();
             methods_[method->full_name()] = method;
         }
     }

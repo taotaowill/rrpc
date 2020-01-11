@@ -1,14 +1,13 @@
 #include <string>
 
 #include "boost/bind.hpp"
-#include "common/timer.h"
-#include "glog/logging.h"
 #include "google/protobuf/descriptor.h"
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/TcpClient.h"
 
 #include "channel.h"
 #include "controller.h"
+#include "timer.h"
 
 namespace rrpc {
 
@@ -53,9 +52,9 @@ void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     void* send_buff = message.Packaging(size);
     RpcController *rpc_controller = dynamic_cast<RpcController*>(controller);
     rpc_conn_->conn->send(send_buff, size);
-    LOG(INFO) << "rpc_channel send message to proxy, size: "
-              << size
-              << ", sequence_id: " << sequence_id;
+//    LOG(INFO) << "rpc_channel send message to proxy, size: "
+//              << size
+//              << ", sequence_id: " << sequence_id;
     requests_[sequence_id] = method;
 
     // sync request
@@ -95,7 +94,7 @@ void RpcChannel::StartLoop() {
 void RpcChannel::OnConnection(const TcpConnectionPtr &conn) {
     MutexLock lock(&mutex_);
     if (!conn->connected()) {
-        LOG(WARNING) << "connection closed by peer";
+//        LOG(WARNING) << "connection closed by peer";
         // TODO retry
         return;
     }
@@ -111,7 +110,7 @@ void RpcChannel::OnConnection(const TcpConnectionPtr &conn) {
     memset(data, 0, size);
     memcpy(data, &meta, size);
     conn->send(reinterpret_cast<void*>(data), size);
-    LOG(INFO) << "RpcClient conn meta sended to proxy";
+//    LOG(INFO) << "RpcClient conn meta sended to proxy";
 }
 
 void RpcChannel::OnMessage(const ::muduo::net::TcpConnectionPtr &conn,
@@ -124,17 +123,17 @@ void RpcChannel::OnMessage(const ::muduo::net::TcpConnectionPtr &conn,
 }
 
 void RpcChannel::ParseMessage() {
-    LOG(INFO) << "parse message";
+//    LOG(INFO) << "parse message";
     // deal with meta message
     if (!rpc_conn_->checked) {
         int ret = rpc_conn_->meta_parser->Parse();
-        LOG(INFO) << "meta_parser: " << ret;
+//        LOG(INFO) << "meta_parser: " << ret;
         switch (ret) {
         case -1:
             break;
         case 1:
             rpc_conn_->checked = true;
-            LOG(INFO) << "conn meta parsed ok";
+//            LOG(INFO) << "conn meta parsed ok";
 
             // reset data
             rpc_conn_->buff.clear();
@@ -147,7 +146,7 @@ void RpcChannel::ParseMessage() {
     }
 
     // deal with rpc message
-    LOG(INFO) << "parse with rpc message";
+//    LOG(INFO) << "parse with rpc message";
     int ret = rpc_conn_->message_parser->Parse();
     if (ret == 1) {
         RpcMessagePtr message = rpc_conn_->message_parser->GetMessage();
@@ -192,7 +191,7 @@ void RpcChannel::ProcessMessage(RpcMessagePtr message) {
 
 void RpcChannel::ProcessCallback(
         int32_t sequence_id) {
-    LOG(INFO) << "++++ ProcessCallback, id: " << sequence_id;
+//    LOG(INFO) << "ProcessCallback, id: " << sequence_id;
     ::google::protobuf::Closure* done = closures_[sequence_id].second;
     RpcController* controller = closures_[sequence_id].first;
     if (controller->IsTimeout()) {

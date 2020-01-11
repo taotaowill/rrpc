@@ -1,11 +1,8 @@
 #pragma once
 
 #include <map>
-#include <pthread.h>
 #include <string>
 
-#include "common/mutex.h"
-#include "common/thread_pool.h"
 #include "google/protobuf/service.h"
 #include "muduo/net/Buffer.h"
 #include "muduo/net/InetAddress.h"
@@ -13,6 +10,8 @@
 
 #include "controller.h"
 #include "connection.h"
+#include "mutex.h"
+#include "thread_pool.h"
 
 const int32_t SEND_BUFF_MAX_SIZE = 10 * 1024 * 1024; // 10M
 

@@ -4,8 +4,6 @@
 #include <string>
 
 #include "boost/smart_ptr.hpp"
-#include "common/mutex.h"
-#include "common/thread_pool.h"
 #include "muduo/net/Buffer.h"
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/InetAddress.h"
@@ -14,6 +12,8 @@
 
 #include "connection.h"
 #include "connection_manager.h"
+#include "mutex.h"
+#include "thread_pool.h"
 
 namespace rrpc {
 

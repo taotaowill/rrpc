@@ -3,13 +3,10 @@
 #include <string>
 #include <map>
 
-#include <boost/algorithm/string.hpp>
-
-#include "common/mutex.h"
-#include "glog/logging.h"
 #include "google/protobuf/service.h"
 #include "google/protobuf/descriptor.h"
 
+#include "mutex.h"
 #include "context.h"
 
 namespace rrpc {

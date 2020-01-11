@@ -2,12 +2,12 @@
 
 #include <deque>
 
-#include "common/mutex.h"
 #include "boost/smart_ptr.hpp"
 #include "muduo/base/Types.h"
 
 #include "message_parser.h"
 #include "message.h"
+#include "mutex.h"
 
 namespace rrpc {
 

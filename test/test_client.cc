@@ -3,12 +3,11 @@
 
 #include "boost/function.hpp"
 #include "boost/bind.hpp"
-#include "common/timer.h"
 #include "gtest/gtest.h"
 
 #include "echo.pb.h"
 #include "rrpc.h"
-
+#include "timer.h"
 
 static int count = 0;
 
@@ -18,11 +17,11 @@ void tcallback(const rrpc::test::EchoRequest* request,
                int /*error*/) {
     count++;
     if (failed) {
-        LOG(WARNING) << "rpc async_request failed";
+//        LOG(WARNING) << "rpc async_request failed";
     } else {
-        LOG(INFO) << "callback from test_client, response message: "
-                  << response->message()
-                  << ", count: " << count;
+//        LOG(INFO) << "callback from test_client, response message: "
+//                  << response->message()
+//                  << ", count: " << count;
     }
 }
 
@@ -42,7 +41,7 @@ TEST(Client, CallMethod) {
     rrpc::test::EchoRequest sync_request;
     sync_request.set_message("sync request: hello rpc");
     rrpc::test::EchoResponse sync_response;
-    long start_time = ::baidu::common::timer::get_micros();
+//    long start_time = ::baidu::common::timer::get_micros();
     for (int i = 0; i < 100; i++) {
         ret = client.SendRequest(
                 stub,
@@ -51,12 +50,12 @@ TEST(Client, CallMethod) {
                 &sync_response,
                 2,
                 1);
-        long end_time = ::baidu::common::timer::get_micros();
-        LOG(INFO) << "time elaspe: " << end_time - start_time;
+//        long end_time = ::baidu::common::timer::get_micros();
+//        LOG(INFO) << "time elaspe: " << end_time - start_time;
         if (!ret) {
-            LOG(WARNING) << "SendRequest failed";
+//            LOG(WARNING) << "SendRequest failed";
         } else {
-            LOG(INFO) << "rpc sync_response: " << sync_response.DebugString();
+//            LOG(INFO) << "rpc sync_response: " << sync_response.DebugString();
         }
     }
 
@@ -84,12 +83,11 @@ TEST(Client, CallMethod) {
         usleep(10000);
     }
 
-    LOG(INFO) << "Test client done";
+//    LOG(INFO) << "Test client done";
     usleep(5000000);
 }
 
 int main(int argc, char* argv[]) {
-    rrpc::SetupLog("test_rpc_proxy");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

@@ -36,11 +36,7 @@ env = Environment(
         'third_party/include/',
     ] ,
     LIBS = [
-        'glog',
-        'gflags',
         'gtest',
-        'tcmalloc',
-        'unwind',
         'muduo_net',
         'muduo_base',
         'pthread',
@@ -48,8 +44,6 @@ env = Environment(
         'boost_filesystem',
         'protobuf',
         'z',
-        'snappy',
-        'common',
     ],
     LIBPATH = [
         '.',
@@ -67,7 +61,7 @@ env = Environment(
 
 # library
 env.Library(
-    'rrpc_lib',
+    'rrpc',
     [
         'src/channel.cc',
         'src/client.cc',
@@ -77,7 +71,6 @@ env.Library(
         'src/pb_server.cc',
         'src/proxy.cc',
         'src/rrpc.pb.cc',
-        'src/rrpc_gflags.cc',
     ],
 )
 
@@ -86,7 +79,7 @@ env.Program(
     'proxy',
     'src/proxy_main.cc',
     LIBS=[
-        'rrpc_lib',
+        'rrpc',
     ] + env['LIBS']
 )
 
@@ -98,7 +91,7 @@ env.Program(
       'test/test_proxy.cc',
     ],
     LIBS=[
-        'rrpc_lib',
+        'rrpc',
     ] + env['LIBS']
 )
 
@@ -109,7 +102,7 @@ env.Program(
         'test/test_server.cc',
     ],
     LIBS=[
-        'rrpc_lib',
+        'rrpc',
     ] + env['LIBS']
 )
 
@@ -120,6 +113,9 @@ env.Program(
         'test/test_client.cc',
     ],
     LIBS=[
-        'rrpc_lib',
+        'rrpc',
     ] + env['LIBS']
 )
+
+
+#g++ test/echo.pb.cc test/test_server.cc -I src/ -I third_party/include/ -L third_party/lib/  -L . -lrrpc -lprotobuf -lmuduo_net -lmuduo_base -lpthread -lgtest -o test_sss

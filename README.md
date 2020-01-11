@@ -1,6 +1,11 @@
-reverse rpc for service behind NAT
+# reverse rpc for service behind NAT
 
-server:
+## requirements:
+* boost
+* protobuf
+* muduo
+
+## server:
 * Start()
 * Stop()
 * RegisterServices()
@@ -9,11 +14,11 @@ server:
 * ParseMessage()
 * ProcessRequest()
 
-client:
+## client:
 * Connect()
 * Send()
 
-proxy:
+## proxy:
 * Start()
 * Stop()
 * OnConnection()
@@ -21,7 +26,8 @@ proxy:
 * ParseMessage()
 * DispatchMessage()
 
-RoadMap:
+## RoadMap:
 * v0.0.1: pb-rpc service behind NAT with muduo(TCP)
 * v0.1.0: udp/tcp tunneling
 * v0.2.0: support multi-protocol(HTTP, PB, xml) within rrpc-protocol
+
